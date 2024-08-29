@@ -27,7 +27,6 @@ proximity_ammenities = [
     ]
 
 
-
 def haversine(lat1, lon1, lat2, lon2):
     # distance between latitudes
     # and longitudes
@@ -125,6 +124,13 @@ async def get_proximity(lat1, lng1, nearest, type):
                 print(item)
                 # TODO: Handle
                 pass
+
+
+async def get_central_london_proximity(lat1, lng1):
+    central_london_lat = 51.507438
+    central_london_lng = -0.1375026
+    distance = haversine(lat1, lng1, central_london_lat, central_london_lng)
+    return distance
 
 
 if __name__ == "__main__":

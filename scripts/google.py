@@ -9,6 +9,7 @@ import json
 ROOT_DIR = "../"
 load_dotenv(ROOT_DIR + ".env")
 
+# --------Google textSearch-------------
 URL = "https://places.googleapis.com/v1/places:searchText"
 API_KEY = os.getenv("GOOGLE_PLACES_API_KEY")
 HEADER = {
@@ -16,6 +17,15 @@ HEADER = {
     "X-Goog-FieldMask": "places.types,places.location,places.rating,places.formattedAddress,places.displayName",
     'Content-Type': 'application/json'
 }
+
+# ----------Ammenities-------------
+proximity_ammenities = [
+        ("train station", "train_station"),
+        ("shopping mall", "shopping_mall"),
+        ("leisure facility", "health"),
+        ("gym", "gym")
+    ]
+
 
 
 def haversine(lat1, lon1, lat2, lon2):
@@ -82,9 +92,9 @@ async def get_school_proximity(lat1, lng1):
             pass
 
 
-async def get_train_proximity(lat1, lng1):
+async def get_proximity(lat1, lng1, nearest, type):
     payload = {
-        'textQuery': "nearest train station",
+        'textQuery': f"nearest {nearest}",
         'locationBias': {
             'circle': {
                 'center': {'latitude': lat1, 'longitude': lng1},
@@ -97,23 +107,29 @@ async def get_train_proximity(lat1, lng1):
     async with aiohttp.ClientSession() as session:
         async with session.post(URL, headers=HEADER, json=payload) as rsp:
             data = await rsp.json()
-
-    print(json.dumps(data, indent=4))
-    all_stations = {}
-    for station in data["places"]:
-        if "train_station" in station["types"]:
-            all_stations[len(all_stations)] = {
-                "name": station["displayName"]["text"],
-                "distance": haversine(lat1, lng1, station["location"]["latitude"], station["location"]["longitude"])
+    # print(data)
+    all_topics = {}
+    for item in data["places"]:
+        if type in item["types"]:
+            all_topics[len(all_topics)] = {
+                "name": item["displayName"]["text"],
+                "distance": haversine(lat1, lng1, item["location"]["latitude"], item["location"]["longitude"])
             }
 
-    all_distances = [item["distance"] for item in all_stations.values()]
-    min_distance = min(all_distances)
+    if len(all_topics) > 0:
+        all_distances = [item["distance"] for item in all_topics.values()]
+        min_distance = min(all_distances)
 
-    for station in all_stations.values():
-        if station["distance"] == min_distance:
-            print(station["name"])
+        for item in all_topics.values():
+            if item["distance"] == min_distance:
+                print(item)
+                # TODO: Handle
+                pass
 
 
 if __name__ == "__main__":
-    asyncio.run(get_train_proximity(51.5963606, -0.0349))
+    asyncio.run(get_proximity(
+        51.5963606, -0.0349,
+        nearest=proximity_ammenities[2][0],
+        type=proximity_ammenities[2][1]
+    ))

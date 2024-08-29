@@ -1,6 +1,7 @@
 import re
 import asyncio
 from playwright.async_api import async_playwright
+from cleaning import run_clean
 
 
 # ---------------------------
@@ -24,6 +25,47 @@ async def handle_page_listings(all_page_listings):
     return listings
 
 
+async def scrape_individual_page_listing(listing, page):
+    try:
+        await page.locator(f"a:has-text('{listing}')").click(timeout=3000)
+        # TODO: scrape data
+        property_info = {
+            "sold_date": [],
+            "beds": [],
+            "bathrooms": [],
+            "sqm": [],
+            "address": [],
+            "postcode": [],
+            "town": [],
+            "borough": [],
+            "garden": [],
+            "primary_school_distance": [],
+            "primary_school_name": [],
+            "secondary_school_distance": [],
+            "secondary_school_name": [],
+            "train_station_distance": [],
+            "train_station_name": [],
+            "shopping_mall_distance": [],
+            "shopping_mall_name": [],
+            "gym_distance": [],
+            "gym_name": [],
+            "leisure_distance": [],
+            "leisure_name": [],
+            "proximity_to_london": [],
+            "interest_rate": [],
+            "inflation_rate": [],
+            "bank_rate": [],
+            "mortgage_rate": [],
+            "regional_employment": [],
+            "regional_unemployment": []
+        }
+
+
+    except Exception as e:
+        print(f"Couldn't find link for {listing}: {e}")
+        return
+
+
 async def get_page_listings(page):
     try:
         all_page_listings = await page.locator(".results").all()
@@ -33,14 +75,6 @@ async def get_page_listings(page):
                 await scrape_individual_page_listing(listing, page)
     except Exception as e:
         print(e)
-
-
-async def scrape_individual_page_listing(listing, page):
-    try:
-        await page.locator(f"a:has-text('{listing}')").click(timeout=3000)
-    except Exception as e:
-        print(f"Couldn't find link for {listing}: {e}")
-        return
 
 
 # ------------------------------
@@ -69,4 +103,6 @@ def main():
 
 
 if __name__ == "__main__":
+    (bank_rate, mortgage_rate, regional_employment, inflation_rate,
+     regional_gdp) = run_clean()
     main()

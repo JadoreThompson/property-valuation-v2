@@ -3,7 +3,6 @@ import os
 from dotenv import load_dotenv
 import math
 import aiohttp
-import json
 
 
 ROOT_DIR = "../"
@@ -27,6 +26,7 @@ proximity_ammenities = [
     ]
 
 
+# -----------Script------------
 def haversine(lat1, lon1, lat2, lon2):
     # distance between latitudes
     # and longitudes

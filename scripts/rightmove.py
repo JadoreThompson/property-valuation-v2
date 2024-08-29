@@ -4,25 +4,36 @@ from playwright.async_api import async_playwright
 from cleaning import run_clean
 
 
-# ---------------------------
-# Scraping the landing page
-# --------------------------
-def get_listing(lines):
-    locations = []
+async def scrape_face(page, listing, property_info):
+    property_info["address"] = listing
 
-    for line in lines:
-        if re.match(r'^(?:(?:\d+|Flat\s+\d+|Apartment\s+\d+),\s+[\w\s]+,)', line):
-            locations.append(line)
-    return locations
+    feature_locators = [
+        ("p:has(span:has-text('number of bedrooms'))", "bedrooms"),
+        ("p:has(span:has-text('number of bathrooms'))", "bathrooms"),
+        ("p:has(span:has-text('type of property'))", "property_type"),
+        (".jzbJiun6qp6OGztBJ0zpJ", "estate_type")
+    ]
 
+    for item in feature_locators:
+        try:
+            feature_locator = page.locator(item[0])
 
-async def handle_page_listings(all_page_listings):
-    for _, item in enumerate(all_page_listings, 1):
-        page_text = await item.inner_text()
-        starting_point = page_text.find("Page desc")
-        lines = page_text[starting_point + len("Page desc"):].strip().split("\n")
-        listings = get_listing(lines)
-    return listings
+            if item[1] == "estate_type":
+                feature = await feature_locator.nth(0).text_content()
+            else:
+                feature = await feature_locator.text_content()
+
+            if item[1] in ["property_type", "estate_type"]:
+                feature = feature.split()[-1]
+            else:
+                feature = feature[-1]
+
+            property_info[item[1]] = feature
+            print("Feature: ", item[1])
+            print("Value: ", feature)
+        except Exception as e:
+            print(e)
+            continue
 
 
 async def scrape_individual_page_listing(listing, page):
@@ -31,7 +42,9 @@ async def scrape_individual_page_listing(listing, page):
         # TODO: scrape data
         property_info = {
             "sold_date": [],
-            "beds": [],
+            "property_type": [],
+            "estate_type": [],
+            "bedrooms": [],
             "bathrooms": [],
             "sqm": [],
             "address": [],
@@ -60,10 +73,33 @@ async def scrape_individual_page_listing(listing, page):
             "regional_unemployment": []
         }
 
+        await scrape_face(page, listing, property_info)
 
     except Exception as e:
         print(f"Couldn't find link for {listing}: {e}")
         return
+
+
+# ---------------------------
+# Scraping the landing page
+# --------------------------
+
+def get_listing(lines):
+    locations = []
+
+    for line in lines:
+        if re.match(r'^(?:(?:\d+|Flat\s+\d+|Apartment\s+\d+),\s+[\w\s]+,)', line):
+            locations.append(line)
+    return locations
+
+
+async def handle_page_listings(all_page_listings):
+    for _, item in enumerate(all_page_listings, 1):
+        page_text = await item.inner_text()
+        starting_point = page_text.find("Page desc")
+        lines = page_text[starting_point + len("Page desc"):].strip().split("\n")
+        listings = get_listing(lines)
+    return listings
 
 
 async def get_page_listings(page):
@@ -73,6 +109,7 @@ async def get_page_listings(page):
             page_listings = await handle_page_listings(all_page_listings)
             for listing in page_listings:
                 await scrape_individual_page_listing(listing, page)
+                await asyncio.sleep(3000)
     except Exception as e:
         print(e)
 

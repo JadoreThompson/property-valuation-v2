@@ -10,7 +10,7 @@ from bs4 import BeautifulSoup
 
 import numpy as np
 
-from proximities import ROOT_DIR
+from propai.proximities import ROOT_DIR
 
 
 load_dotenv(ROOT_DIR + ".env")
@@ -57,10 +57,9 @@ async def get_epc_rating(address):
         if postcode is None:
             return np.nan
     except Exception as e:
-        print(e)
+        print("get epc rating: ", e)
 
     base_url = os.getenv("ONS_API_LINK")
-
     query_params = {"postcode": postcode}
     encoded_params = urlencode(query_params)
 
@@ -69,20 +68,21 @@ async def get_epc_rating(address):
     async with aiohttp.ClientSession() as session:
         async with session.get(full_url, headers=ONS_HEADER) as rsp:
             epc_data = await rsp.json()
-
-    details = []
+    # print(epc_data)
+    print("*" * 100)
+    details = {}
     for item in epc_data["rows"]:
         if item["address"] == find_street(address):
-            print(item)
-            details.append(item.get("current-energy-rating", np.nan))
-            details.append(float(item.get("total-floor-area", np.nan)))
-            details.append(find_town(address))
-            details.append(item.get("local-authority-label", np.nan))
-            details.append(postcode)
-    print(details)
+            details["epc"] = item.get("current-energy-rating", np.nan)
+            details["sqm"] = float(item.get("total-floor-area", np.nan))
+            details["borough"] = item.get("local-authority-label", np.nan)
+            details["postcode"] = postcode
     return details
 
 
+'''
+    Returns the crime rate per thousand as a float
+'''
 async def get_crime_rate(postcode="DA145JG"):
     def extract_total_rate(html_content):
         soup = BeautifulSoup(html_content, 'html.parser')
@@ -109,7 +109,7 @@ async def get_crime_rate(postcode="DA145JG"):
             html_document = await rsp.text()
 
     total_rate = extract_total_rate(html_document)
-    return total_rate
+    return float(total_rate)
 
 
 if __name__ == "__main__":

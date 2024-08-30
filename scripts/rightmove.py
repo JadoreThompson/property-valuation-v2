@@ -3,11 +3,25 @@ import asyncio
 from playwright.async_api import async_playwright
 import json
 
+from propai.fetcher import get_epc_rating
 from cleaning import run_clean
+
+import numpy as np
+
+
+async def scrape_more_features(page, listing, property_info):
+    more_features = await get_epc_rating(listing)
+
+    # if len(more_features) > 0:
+    property_info["epc_rating"].append(more_features.get("epc", np.nan))
+    property_info["sqm"].append(more_features.get("sqm", np.nan))
+    property_info["borough"].append(more_features.get("borough", np.nan))
+    property_info["postcode"].append(more_features.get("postcode", np.nan))
+    pass
 
 
 async def scrape_face(page, listing, property_info):
-    property_info["address"] = listing
+    property_info["address"].append(listing)
 
     feature_locators = [
         ("p:has(span:has-text('number of bedrooms'))", "bedrooms"),
@@ -35,12 +49,10 @@ async def scrape_face(page, listing, property_info):
                 feature = int(feature[-1])
 
             property_info[item[1]].append(feature)
-            print(listing)
-            print("Feature: ", item[1])
-            print("Value: ", feature)
         except Exception as e:
             print(e)
             continue
+    return property_info
 
 
 async def scrape_individual_page_listing(listing, page):
@@ -92,9 +104,12 @@ async def scrape_individual_page_listing(listing, page):
             "extra_features": []
         }
 
-        await scrape_face(page, listing, property_info)
+        property_info = await scrape_face(page, listing, property_info)
+        await scrape_more_features(page, listing, property_info)
+        # property_info = await scrape_more_features(page, listing, property_info)
     except Exception as e:
-        print(f"Couldn't find link for {listing}: {e}")
+        print("yo2")
+        print("scrape individual listing: ", e)
     finally:
         await asyncio.sleep(2)
         await page.go_back()

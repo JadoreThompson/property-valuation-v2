@@ -5,6 +5,9 @@ from dotenv import load_dotenv
 import re
 import aiohttp
 from urllib.parse import urlencode
+import json
+from bs4 import BeautifulSoup
+
 import numpy as np
 
 from proximities import ROOT_DIR
@@ -80,5 +83,36 @@ async def get_epc_rating(address):
     return details
 
 
+async def get_crime_rate(postcode="DA145JG"):
+    def extract_total_rate(html_content):
+        soup = BeautifulSoup(html_content, 'html.parser')
+
+        script_tag = soup.find('script', id='__NEXT_DATA__')
+
+        if script_tag is None:
+            return "Error: Could not find __NEXT_DATA__ script tag"
+
+        json_data = json.loads(script_tag.string)
+
+        try:
+            total_rate = \
+            json_data['props']['initialReduxState']['report']['sectionResponses']['crime']['data']['crimeLsoa'][
+                'totalRate']
+            return total_rate
+        except KeyError:
+            return "Error: Could not find totalRate in the JSON data"
+
+    base_url = os.getenv("CRIME_RATE_API_LINK")
+    link_to_scrape = base_url + f"{postcode}/crime"
+    async with aiohttp.ClientSession() as session:
+        async with session.get(link_to_scrape) as rsp:
+            html_document = await rsp.text()
+
+    total_rate = extract_total_rate(html_document)
+    return total_rate
+
+
 if __name__ == "__main__":
-    asyncio.run(get_epc_rating("12, Gwyn Close, London, Greater London SW6 2EQ"))
+    # asyncio.run(get_epc_rating("12, Gwyn Close, London, Greater London SW6 2EQ"))
+    # asyncio.run(get_crime_rate())
+    pass

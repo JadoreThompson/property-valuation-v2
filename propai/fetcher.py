@@ -56,7 +56,7 @@ async def get_epc_rating(address):
     except Exception as e:
         print(e)
 
-    base_url = 'https://epc.opendatacommunities.org/api/v1/domestic/search'
+    base_url = os.getenv("ONS_API_LINK")
 
     query_params = {"postcode": postcode}
     encoded_params = urlencode(query_params)

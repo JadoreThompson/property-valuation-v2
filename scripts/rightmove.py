@@ -4,20 +4,44 @@ from playwright.async_api import async_playwright
 import json
 
 # from propai.fetcher import get_epc_rating
-from propai import fetcher
+from propai import fetcher, proximities
 from cleaning import run_clean
 
 import numpy as np
 
 
+async def scrape_ammenities(address, property_info):
+    lat, lng = await fetcher.get_lat_long(address)
+
+    amenity_distances = {}
+    for item in proximities.proximity_ammenities:
+        amenity_distances.update(await proximities.get_proximity(
+            lat1=lat,
+            lng1=lng,
+            nearest=item[0],
+            type_to_target=item[1],
+            topic_name=item[2]
+        ))
+
+    amenity_distances.update(proximities.get_central_london_proximity(lat, lng))
+    amenity_distances.update(await proximities.get_school_proximity(lat, lng))
+
+    for key in [kn for kn in amenity_distances]:
+        property_info[key].append(amenity_distances.get(key, np.nan))
+    return property_info
+
+
 async def scrape_more_features_from_face(listing, property_info):
     more_features = await fetcher.get_epc_rating(listing)
 
-    property_info["epc_rating"].append(more_features.get("epc", np.nan))
-    property_info["sqm"].append(more_features.get("sqm", np.nan))
-    property_info["borough"].append(more_features.get("borough", np.nan))
-    property_info["postcode"].append(more_features.get("postcode", np.nan))
+    property_info["epc_rating"].append(more_features[0])
+    property_info["sqm"].append(more_features[1])
+    property_info["borough"].append(more_features[2])
+    property_info["postcode"].append(more_features[3])
     property_info["town"].append("London")
+    property_info["council_tax_band"].append(await fetcher.get_council_tax_band(listing))
+    property_info["crime_rate"].append(await fetcher.get_crime_rate(listing))
+
     return property_info
 
 
@@ -77,7 +101,6 @@ async def scrape_individual_page_listing(listing, page):
             "town": [],
             "borough": [],
             "council_tax_band": [],
-            "garden": [],
             "crime_rate": [],
             "epc_rating": [],
             "park_distance": [],
@@ -106,10 +129,10 @@ async def scrape_individual_page_listing(listing, page):
 
         property_info = await scrape_face(page, listing, property_info)
         property_info = await scrape_more_features_from_face(listing, property_info)
-        await fetcher.get_council_tax_band()
+        property_info = await scrape_ammenities(listing, property_info)
+
     except Exception as e:
-        print("yo2")
-        print("scrape individual listing: ", e)
+        print("scrape individual page listing: ", e)
     finally:
         await asyncio.sleep(2)
         await page.go_back()

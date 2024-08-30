@@ -1,6 +1,7 @@
 import asyncio
 import os
 
+import googlemaps
 from thefuzz import fuzz
 from dotenv import load_dotenv
 
@@ -71,21 +72,30 @@ async def get_epc_rating(address):
     async with aiohttp.ClientSession() as session:
         async with session.get(full_url, headers=ONS_HEADER) as rsp:
             epc_data = await rsp.json()
-    # print(epc_data)
-    details = {}
-    for item in epc_data["rows"]:
-        if item["address"] == find_street(address):
-            details["epc"] = item.get("current-energy-rating", np.nan)
-            details["sqm"] = float(item.get("total-floor-area", np.nan))
-            details["borough"] = item.get("local-authority-label", np.nan)
-            details["postcode"] = postcode
-    return details
+
+    epc_items = []
+    for i in range(0, len(epc_data["rows"])):
+        epc_items.append((
+            epc_data["rows"][i].get("current-energy-rating", np.nan),
+            float(epc_data["rows"][i].get("total-floor-area", np.nan)),
+            epc_data["rows"][i].get("local-authority-label", np.nan),
+            postcode,
+            fuzz.partial_ratio(address, epc_data["rows"][i].get("address", np.nan))
+        ))
+
+    maximum = max([item[-1] for item in epc_items])
+    for i in range(0, len(epc_items)):
+        if epc_items[i][-1] == maximum:
+            print(f"EPC Sims: {address}, ", epc_items[i])
+            return epc_items[i]
 
 
 '''
     Returns the crime rate per thousand as a float
 '''
-async def get_crime_rate(postcode="DA145JG"):
+async def get_crime_rate(address):
+    postcode = find_postcode(address)
+
     def extract_total_rate(html_content):
         soup = BeautifulSoup(html_content, 'html.parser')
 
@@ -114,14 +124,10 @@ async def get_crime_rate(postcode="DA145JG"):
     return float(total_rate)
 
 
-def find_closes():
-    # for
-    pass
-
-
 async def get_council_tax_band(
-        address="Third Floor Flat, 49, Ossington Street, London, Greater London W2 4LY", postcode="W24LY"):
+        address="Third Floor Flat, 49, Ossington Street, London, Greater London W2 4LY"):
 
+    postcode = find_postcode(address)
     address = address.replace(",", "")
     address = address.split()
     address = " ".join(address[:-4]).upper()
@@ -172,6 +178,12 @@ async def get_council_tax_band(
             return band
 
 
+async def get_lat_long(address):
+    postcode = find_postcode(address)
+    gmaps = googlemaps.Client(key=os.getenv("GOOGLE_MAPS_API_KEY"))
+    data = gmaps.geocode(f"{postcode}, EN")
+    return data[0]["geometry"]["location"]["lat"], data[0]["geometry"]["location"]["lng"]
+
+
 if __name__ == "__main__":
-    asyncio.run(get_council_tax_band())
     pass

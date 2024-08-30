@@ -19,11 +19,11 @@ HEADER = {
 
 # ----------Ammenities-------------
 proximity_ammenities = [
-    ("train station", "train_station"),
-    ("shopping mall", "shopping_mall"),
-    ("leisure facility", "health"),
-    ("gym", "gym"),
-    ("park", "park")
+    ("train station", "train_station", "train_station"),
+    ("shopping mall", "shopping_mall", "shopping_mall"),
+    ("leisure facility", "health", "leisure"),
+    ("gym", "gym", "gym"),
+    ("park", "park", "park")
 ]
 
 
@@ -67,76 +67,86 @@ async def get_school_proximity(lat1, lng1):
         async with session.post(URL, headers=HEADER, json=payload) as rsp:
             data = await rsp.json()
 
-    schools_dict = {}
+    schools_dict = []
 
     for school in data["places"]:
         if "primary_school" in school["types"]:
-            distance = haversine(lat1, lng1, school["location"]["latitude"],
-                                 school["location"]["longitude"])
-            schools_dict[len(dict)] = {"name": school["displayName"]["text"], "distance": distance, "type": "primary"}
+            schools_dict.append({
+                "name": school["displayName"]["text"],
+                "distance": haversine(lat1, lng1, school["location"]["latitude"], school["location"]["longitude"]),
+                "type": "primary"
+            })
 
         if "secondary_school" in school["types"]:
-            distance = haversine(lat1, lng1, school["location"]["latitude"],
-                                 school["location"]["longitude"])
-            schools_dict[len(dict)] = {"name": school["displayName"]["text"], "distance": distance, "type": "secondary"}
+            schools_dict.append({
+                "name": school["displayName"]["text"],
+                "distance": haversine(lat1, lng1, school["location"]["latitude"], school["location"]["longitude"]),
+                "type": "secondary"
+            })
 
-    prim_dis = [item["distance"] for item in schools_dict.values() if item["type"] == "primary"]
-    sec_dis = [item["distance"] for item in schools_dict.values() if item["type"] == "secondary"]
+    prim_dis = [item["distance"] for item in schools_dict if item["type"] == "primary"]
+    sec_dis = [item["distance"] for item in schools_dict if item["type"] == "secondary"]
 
-    for item in schools_dict.values():
-        if item["distance"] == min(prim_dis):
-            # TODO: Handle
-            pass
-        if item["distance"] == min(sec_dis):
-            # TODO: Handle
-            pass
-
-
-async def get_proximity(lat1, lng1, nearest, type):
-    payload = {
-        'textQuery': f"nearest {nearest}",
-        'locationBias': {
-            'circle': {
-                'center': {'latitude': lat1, 'longitude': lng1},
-                'radius': 50000.0
-            }
-        },
-        'pageSize': 100
-    }
-
-    async with aiohttp.ClientSession() as session:
-        async with session.post(URL, headers=HEADER, json=payload) as rsp:
-            data = await rsp.json()
-    # print(data)
-    all_topics = {}
-    for item in data["places"]:
-        if type in item["types"]:
-            all_topics[len(all_topics)] = {
-                "name": item["displayName"]["text"],
-                "distance": haversine(lat1, lng1, item["location"]["latitude"], item["location"]["longitude"])
-            }
-
-    if len(all_topics) > 0:
-        all_distances = [item["distance"] for item in all_topics.values()]
-        min_distance = min(all_distances)
-
-        for item in all_topics.values():
-            if item["distance"] == min_distance:
-                print(item)
-                # TODO: Handle
-                pass
+    return_dict = {}
+    for item in schools_dict:
+        if item["distance"] == min(prim_dis) and item["type"] == "primary":
+            return_dict.update({
+                "primary_school_distance": float(item["distance"]),
+                "primary_school_name": item["name"]
+            })
+        if item["distance"] == min(sec_dis) and item["type"] == "secondary":
+            return_dict.update({
+                "secondary_school_distance": float(item["distance"]),
+                "secondary_school_name": item["name"]
+            })
+    return return_dict
 
 
-async def get_central_london_proximity(lat1, lng1):
+async def get_proximity(lat1, lng1, nearest, type_to_target, topic_name):
+    try:
+        payload = {
+            'textQuery': f"nearest {nearest}",
+            'locationBias': {
+                'circle': {
+                    'center': {'latitude': lat1, 'longitude': lng1},
+                    'radius': 50000.0
+                }
+            },
+            'pageSize': 100
+        }
+
+        async with aiohttp.ClientSession() as session:
+            async with session.post(URL, headers=HEADER, json=payload) as rsp:
+                data = await rsp.json()
+
+        all_items = []
+        for item in data["places"]:
+            if type_to_target in item["types"]:
+                all_items.append({
+                    "name": item["displayName"]["text"],
+                    "distance": haversine(lat1, lng1, item["location"]["latitude"], item["location"]["longitude"])
+                })
+
+        if all_items:
+            all_distances = [item["distance"] for item in all_items]
+            min_distance = min(all_distances)
+
+            for item in all_items:
+                if item["distance"] == min_distance:
+                    return {
+                        topic_name + "_distance": item["distance"],
+                        topic_name + "_name": item["name"]
+                    }
+    except Exception as e:
+        print("get proximity: ", e)
+
+
+def get_central_london_proximity(lat1, lng1):
     central_london_lat = 51.507438
     central_london_lng = -0.1375026
     distance = haversine(lat1, lng1, central_london_lat, central_london_lng)
-    return distance
+    return {"proximity_to_london": distance}
 
 
 if __name__ == "__main__":
-    asyncio.run(get_proximity(
-        51.5963606, -0.0349,
-        nearest=proximity_ammenities[-1][0],
-        type=proximity_ammenities[-1][1]
-    ))
+    pass

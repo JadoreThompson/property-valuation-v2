@@ -66,6 +66,7 @@ async def scrape_individual_page_listing(listing, page):
             "borough": [],
             "garden": [],
             "council_tax_band": [],
+            "crime_rate": [],
             "epc_rating": [],
             "park_distance": [],
             "park_name": [],

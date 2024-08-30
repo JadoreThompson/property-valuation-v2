@@ -19,11 +19,12 @@ HEADER = {
 
 # ----------Ammenities-------------
 proximity_ammenities = [
-        ("train station", "train_station"),
-        ("shopping mall", "shopping_mall"),
-        ("leisure facility", "health"),
-        ("gym", "gym")
-    ]
+    ("train station", "train_station"),
+    ("shopping mall", "shopping_mall"),
+    ("leisure facility", "health"),
+    ("gym", "gym"),
+    ("park", "park")
+]
 
 
 # -----------Script------------
@@ -136,6 +137,6 @@ async def get_central_london_proximity(lat1, lng1):
 if __name__ == "__main__":
     asyncio.run(get_proximity(
         51.5963606, -0.0349,
-        nearest=proximity_ammenities[2][0],
-        type=proximity_ammenities[2][1]
+        nearest=proximity_ammenities[-1][0],
+        type=proximity_ammenities[-1][1]
     ))

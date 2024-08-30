@@ -3,21 +3,22 @@ import asyncio
 from playwright.async_api import async_playwright
 import json
 
-from propai.fetcher import get_epc_rating
+# from propai.fetcher import get_epc_rating
+from propai import fetcher
 from cleaning import run_clean
 
 import numpy as np
 
 
-async def scrape_more_features(page, listing, property_info):
-    more_features = await get_epc_rating(listing)
+async def scrape_more_features_from_face(listing, property_info):
+    more_features = await fetcher.get_epc_rating(listing)
 
-    # if len(more_features) > 0:
     property_info["epc_rating"].append(more_features.get("epc", np.nan))
     property_info["sqm"].append(more_features.get("sqm", np.nan))
     property_info["borough"].append(more_features.get("borough", np.nan))
     property_info["postcode"].append(more_features.get("postcode", np.nan))
-    pass
+    property_info["town"].append("London")
+    return property_info
 
 
 async def scrape_face(page, listing, property_info):
@@ -74,10 +75,9 @@ async def scrape_individual_page_listing(listing, page):
             "address": [],
             "postcode": [],
             "town": [],
-            "city": [],
             "borough": [],
-            "garden": [],
             "council_tax_band": [],
+            "garden": [],
             "crime_rate": [],
             "epc_rating": [],
             "park_distance": [],
@@ -105,8 +105,8 @@ async def scrape_individual_page_listing(listing, page):
         }
 
         property_info = await scrape_face(page, listing, property_info)
-        await scrape_more_features(page, listing, property_info)
-        # property_info = await scrape_more_features(page, listing, property_info)
+        property_info = await scrape_more_features_from_face(listing, property_info)
+        await fetcher.get_council_tax_band()
     except Exception as e:
         print("yo2")
         print("scrape individual listing: ", e)

@@ -3,11 +3,64 @@ import asyncio
 from playwright.async_api import async_playwright
 import json
 
-# from propai.fetcher import get_epc_rating
 from propai import fetcher, proximities
 from cleaning import run_clean
 
 import numpy as np
+
+
+async def scrape_economic_relations(property_info):
+    sold_date = property_info["sold_date"][-1].split()
+    year = sold_date[-1]
+    month = sold_date[1]
+
+    keys = [
+        ("bank_rate", bank_rate, "rate"),
+        ("inflation_rate", inflation_rate, "cpi_rate"),
+    ]
+
+    for pair in keys:
+        property_info[pair[0]].append(pair[1][(pair[1]["year"] == int(year)) & (pair[1]["month"] == month)][pair[2]].values[0])
+
+    "2 year 95% LTV"
+
+    m_keys = [
+        "2 year 95% LTV",
+        "2 year 90% LTV",
+        "2 year 75% LTV",
+        "2 year 60% LTV",
+        "2 year 85% LTV"
+    ]
+    for key in m_keys:
+        property_info["_".join(key.split())].append(
+            mortgage_rate[(mortgage_rate["year"] == int(year)) &
+                           (mortgage_rate["month"] == month)][key].values[0])
+
+    r_keys = [""
+        "regional_employment",
+        "regional_gdp"
+    ]
+
+    print("-----------")
+    if int(year) < 2023:
+        value = regional_employment[regional_employment['borough'] == regional_employment["borough"]]['2022'].values
+        result = [value[0] if len(value) > 0 else np.nan]
+        property_info[r_keys[0]].append(result)
+    else:
+        property_info[r_keys[0]].append(np.nan)
+
+    if int(year) < 2024:
+        value = regional_gdp[(regional_gdp["Year"] == int(year)) & (regional_gdp["Area Name"] == property_info["borough"])]["Value"].values
+        result = [value[0] if len(value) > 0 else np.nan]
+        property_info[r_keys[1]].append(result)
+    else:
+        property_info[r_keys[1]].append(np.nan)
+
+    property_info["year"].append(int(year))
+    property_info["month"].append(month)
+    property_info["day"].append(int(sold_date[0]))
+
+    return property_info
 
 
 async def scrape_ammenities(address, property_info):
@@ -91,6 +144,9 @@ async def scrape_individual_page_listing(listing, page):
         # TODO: scrape data
         property_info = {
             "sold_date": [],
+            "year": [],
+            "month": [],
+            "day": [],
             "property_type": [],
             "estate_type": [],
             "bedrooms": [],
@@ -118,19 +174,25 @@ async def scrape_individual_page_listing(listing, page):
             "leisure_distance": [],
             "leisure_name": [],
             "proximity_to_london": [],
-            "interest_rate": [],
+            # "interest_rate": [],
             "inflation_rate": [],
             "bank_rate": [],
-            "mortgage_rate": [],
+            # "mortgage_rate": [],
+            "2_year_95%_LTV": [],
+            "2_year_90%_LTV": [],
+            "2_year_75%_LTV": [],
+            "2_year_60%_LTV": [],
+            "2_year_85%_LTV": [],
             "regional_employment": [],
-            "regional_unemployment": [],
+            "regional_gdp": [],
             "extra_features": []
         }
 
         property_info = await scrape_face(page, listing, property_info)
         property_info = await scrape_more_features_from_face(listing, property_info)
         property_info = await scrape_ammenities(listing, property_info)
-
+        property_info = await scrape_economic_relations(property_info)
+        print(json.dumps(property_info, indent=4))
     except Exception as e:
         print("scrape individual page listing: ", e)
     finally:

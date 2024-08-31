@@ -236,7 +236,7 @@ async def run(row):
     url = "https://www.rightmove.co.uk/house-prices/e1-0ed.html?country=england&searchLocation=E1+0ED"
     try:
         async with async_playwright() as p:
-            browser = await p.chromium.launch(headless=False)
+            browser = await p.chromium.launch(headless=True)
             page = await browser.new_page()
 
             # Entering the site
@@ -267,7 +267,6 @@ async def run(row):
 
 # df = data_2y[0: 2]
 async def main():
-    updated_rows = []
     chunk_size = 3
 
     for i in range(0, len(data_2y), chunk_size):

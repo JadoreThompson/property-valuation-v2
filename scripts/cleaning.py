@@ -1,3 +1,4 @@
+import numpy as np
 import pandas as pd
 
 
@@ -116,15 +117,43 @@ def clean_regional_gdp():
     return df
 
 
+def clean_lr_data():
+    df = pd.read_csv(EXTERNAL_DIR + "last_2y.csv")
+    cols = [col for col in df.columns][-16:]
+    df = df.drop(cols, axis=1)
+    df = df.drop("unique_id", axis=1)
+
+    df = df.rename(columns={
+        "deed_date": "sold_date"
+    })
+    df["sold_date"] = pd.to_datetime(df["sold_date"], format="%Y-%m-%d")
+    df["year"] = df["sold_date"].dt.year
+    df["month"] = df["sold_date"].dt.month
+    df["day"] = df["sold_date"].dt.day
+    df["property_type"] = df["property_type"].map({"F": "Flat/Maisonette",
+                                                   "T": "Terraced",
+                                                   "O": "Other",
+                                                   "S": "Semi-detached",
+                                                   "D": "Detached"
+                                                   })
+    df["estate_type"] = df["estate_type"].map({"L": "Lease", "F": "Freehold"})
+    df["address"] = df.apply(lambda row: f"{row['saon'] if pd.notna(row['saon']) and row['saon'] != '' else ''} {row['paon']} {row['street']}".strip(),axis=1)
+
+    return df
+
+
 def run_clean():
     bank_rate = clean_bank_rate()
     mortgage_rate = clean_mortgage_rates()
     regional_employment = clean_regional_employment()
     inflation_rate = clean_inflation_rate()
     regional_gdp = clean_regional_gdp()
+    data_2y = clean_lr_data()
+
+    # print(regional_employment)
 
     return bank_rate, mortgage_rate, regional_employment, inflation_rate,\
-        regional_gdp
+        regional_gdp, data_2y
 
 
 if __name__ == "__main__":

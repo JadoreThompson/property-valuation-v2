@@ -10,7 +10,7 @@ from rapidfuzz import fuzz
 from multiprocessing import Pool
 import numpy as np
 
-import cleaning
+from scripts import cleaning
 from propai import fetcher, proximities
 
 

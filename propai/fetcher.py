@@ -2,20 +2,24 @@ import asyncio
 import os
 
 import googlemaps
+from google.cloud import storage
+
 from thefuzz import fuzz
 from dotenv import load_dotenv
 
 import re
 import aiohttp
 from urllib.parse import urlencode
+
 import json
 from bs4 import BeautifulSoup
 from playwright.async_api import async_playwright
 
 import numpy as np
+from datetime import datetime
 
 from propai.proximities import ROOT_DIR
-
+import pandas as pd
 
 load_dotenv(ROOT_DIR + ".env")
 
@@ -185,5 +189,15 @@ async def get_lat_long(address):
     return data[0]["geometry"]["location"]["lat"], data[0]["geometry"]["location"]["lng"]
 
 
+async def upload_to_bucket(df):
+    try:
+        storage_client = storage.Client()
+        bucket = storage_client.bucket(bucket_name=os.getenv("BUCKET_NAME"))
+        blob = bucket.blob("rightmove{0}.csv".format(datetime.now().strftime("%Y-%m-%d 5H_%M_%S")))
+        blob.upload_from_string(df.to_csv(index=False), "text/csv")
+    except:
+        pass
+
 if __name__ == "__main__":
-    pass
+    df = pd.DataFrame(data={"name": [10]})
+    asyncio.run(upload_to_bucket(df))

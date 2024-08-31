@@ -122,10 +122,12 @@ async def scrape_face(page, listing, property_info):
             if item[1] in ["property_type", "estate_type"]:
                 feature = feature.split()[-1]
             elif item[1] in ["sold_date", "extra_features"]:
-                feature = feature
+                pass
             else:
                 feature = int(feature[-1])
 
+            if not isinstance(feature, int) and not feature.strip():
+                feature = np.nan
             property_info[item[1]].append(feature)
         except Exception as e:
             print(e)
@@ -141,7 +143,6 @@ async def scrape_individual_page_listing(listing, page):
         return
 
     try:
-        # TODO: scrape data
         property_info = {
             "sold_date": [],
             "year": [],
@@ -223,14 +224,21 @@ async def handle_page_listings(all_page_listings):
 
 
 async def get_page_listings(page):
-    try:
-        all_page_listings = await page.locator(".results").all()
-        if all_page_listings:
-            page_listings = await handle_page_listings(all_page_listings)
-            for listing in page_listings:
-                await scrape_individual_page_listing(listing, page)
-    except Exception as e:
-        print(e)
+    while True:
+        try:
+            all_page_listings = await page.locator(".results").all()
+            if all_page_listings:
+                page_listings = await handle_page_listings(all_page_listings)
+                for listing in page_listings:
+                    await scrape_individual_page_listing(listing, page)
+                try:
+                    await page.wait_for_selector('div.pagination.pagination-next', state='visible', timeout=5000)
+                    await page.click('div.pagination.pagination-next:has-text("Next")')
+                except Exception as e:
+                    print(f"get page listings: {e}")
+                    break
+        except Exception as e:
+            print(e)
 
 
 # ------------------------------

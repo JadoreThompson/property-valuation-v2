@@ -5,7 +5,8 @@ import aiohttp
 import pandas as pd
 from playwright.async_api import async_playwright
 import re
-from thefuzz import fuzz
+# from thefuzz import fuzz
+from rapidfuzz import fuzz
 from multiprocessing import Pool
 import numpy as np
 

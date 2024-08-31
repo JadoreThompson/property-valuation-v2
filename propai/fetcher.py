@@ -164,11 +164,8 @@ def find_postcode(address):
     Returns a list of:
         - EPC rating
         - SQM
-        - Town 
-        - Borough 
-        - Postcode
 '''
-async def get_epc_rating(address, postcode):
+async def get_epc_rating(postcode, session):
     try:
         if postcode is None:
             return pd.NA
@@ -181,18 +178,14 @@ async def get_epc_rating(address, postcode):
 
     full_url = f"{base_url}?{encoded_params}"
 
-    async with aiohttp.ClientSession() as session:
-        async with session.get(full_url, headers=ONS_HEADER) as rsp:
-            epc_data = await rsp.json()
+    async with session.get(full_url, headers=ONS_HEADER) as rsp:
+        epc_data = await rsp.json()
 
     epc_items = []
     for i in range(0, len(epc_data["rows"])):
         epc_items.append((
             epc_data["rows"][i].get("current-energy-rating", pd.NA),
-            float(epc_data["rows"][i].get("total-floor-area", pd.NA)),
-            epc_data["rows"][i].get("local-authority-label", pd.NA),
-            postcode,
-            fuzz.partial_ratio(address, epc_data["rows"][i].get("address", pd.NA))
+            float(epc_data["rows"][i].get("total-floor-area", pd.NA))
         ))
 
     maximum = max([item[-1] for item in epc_items])
@@ -204,7 +197,7 @@ async def get_epc_rating(address, postcode):
 '''
     Returns the crime rate per thousand as a float
 '''
-async def get_crime_rate(address, postcode):
+async def get_crime_rate(postcode, session):
     postcode = "".join(postcode.split())
 
     def extract_total_rate(html_content):
@@ -221,18 +214,18 @@ async def get_crime_rate(address, postcode):
             total_rate = \
             json_data['props']['initialReduxState']['report']['sectionResponses']['crime']['data']['crimeLsoa'][
                 'totalRate']
-            return total_rate
+            return float(total_rate)
         except KeyError:
-            return "Error: Could not find totalRate in the JSON data"
+            return pd.NA
 
     base_url = os.getenv("CRIME_RATE_API_LINK")
     link_to_scrape = base_url + f"{postcode}/crime"
-    async with aiohttp.ClientSession() as session:
-        async with session.get(link_to_scrape) as rsp:
-            html_document = await rsp.text()
+
+    async with session.get(link_to_scrape) as rsp:
+        html_document = await rsp.text()
 
     total_rate = extract_total_rate(html_document)
-    return float(total_rate)
+    return total_rate
 
 
 async def get_council_tax_band(address, postcode):
@@ -244,19 +237,19 @@ async def get_council_tax_band(address, postcode):
         await page.goto(url)
 
         try:
-            await page.locator("button:has-text('Reject additional cookies')").click(timeout=5000)
+            await page.locator("button:has-text('Reject additional cookies')").click(timeout=3000)
         except:
             print("Cookie button not found or already handled")
 
-        await page.fill("#postcode", postcode)
+        await page.fill("#postcode", postcode, timeout=3000)
         await page.keyboard.press("Enter")
 
         vals = []
         while True:
             try:
-                await page.wait_for_selector(".govuk-table__body", timeout=10000)
+                await page.wait_for_selector(".govuk-table__body", timeout=3000)
                 table_locator = page.locator(".govuk-table__body")
-                content = await table_locator.inner_text()
+                content = await table_locator.inner_text(timeout=3000)
 
                 content = content.split("\n")
 
@@ -266,7 +259,7 @@ async def get_council_tax_band(address, postcode):
                     vals.append({"address": c, "count": count})
 
                 locator = page.locator("a.voa-pagination__link:has(span:has-text('Next'))")
-                await locator.click(timeout=5000)
+                await locator.click(timeout=3000)
 
             except Exception as e:
                 print(e)

@@ -6,7 +6,7 @@ import pandas as pd
 from playwright.async_api import async_playwright
 import re
 from thefuzz import fuzz
-from tqdm import tqdm
+from multiprocessing import Pool
 import numpy as np
 
 import cleaning
@@ -25,22 +25,22 @@ async def scrape_economic_relations(row):
     keys = [
         ("bank_rate", bank_rate, "rate"),
         ("inflation_rate", inflation_rate, "cpi_rate"),
+        "2 year 95% LTV",
+        "2 year 90% LTV",
+        "2 year 75% LTV",
+        "2 year 60% LTV",
+        "2 year 85% LTV",
+        "regional_employment",
+        "regional_gdp"
     ]
 
-    for key, df, id in keys:
+    for key, df, id in keys[: 2]:
         try:
             row[key] = df[(df["year"] == year) & (df["month"] == month)][id].values[0]
         except IndexError:
             row[key] = pd.NA
 
-    m_keys = [
-        "2 year 95% LTV",
-        "2 year 90% LTV",
-        "2 year 75% LTV",
-        "2 year 60% LTV",
-        "2 year 85% LTV"
-    ]
-    for key in m_keys:
+    for key in keys[2: 7]:
         try:
             row["_".join(key.split())] = \
                 mortgage_rate[(mortgage_rate["year"] == year) &
@@ -48,33 +48,23 @@ async def scrape_economic_relations(row):
         except IndexError:
             row["_".join(key.split())] = pd.NA
 
-    r_keys = [""
-        "regional_employment",
-        "regional_gdp"
-    ]
-
     if int(row["year"]) < 2024:
+        regional_gdp.set_index('borough', inplace=True)
         try:
-            value = \
-            regional_employment[(regional_employment["Year"] == year) & (regional_employment["Area name"] == district)]["Value"].values
-
-            result = [value[0] if len(value) > 0 else pd.NA]
-            row[r_keys[0]] = result
-        except IndexError:
-            row[r_keys[0]] = pd.NA
+            row[keys[-2]] = regional_gdp.at[district, '2022']
+        except KeyError:
+            row[keys[-2]] = pd.NA
     else:
-        row[r_keys[0]] = pd.NA
+        row[keys[-2]] = pd.NA
 
     if year < 2023:
+        regional_gdp.set_index("borough", inplace=True)
         try:
-            value = regional_gdp[regional_gdp['borough'] == district]['2022'].values
-            result = [value[0] if len(value) > 0 else pd.NA]
-            row[r_keys[1]] = result
-        except IndexError:
-            row[r_keys[1]] = pd.NA
+            row[keys[-1]] = regional_gdp.at[district, '2022']
+        except KeyError:
+            row[keys[-1]] = pd.NA
     else:
-        row[r_keys[1]] = pd.NA
-
+        row[keys[-1]] = pd.NA
     return row
 
 
@@ -83,16 +73,6 @@ async def scrape_amenities(row, postcode):
     row["lat"], row["lng"] = lat, lng
 
     amenity_distances = {}
-
-    # for item in proximities.proximity_ammenities:
-    #     amenity_distances.update(await proximities.get_proximity(
-    #         lat1=lat,
-    #         lng1=lng,
-    #         nearest=item[0],
-    #         type_to_target=item[1],
-    #         topic_name=item[2]
-    #     ))
-
     tasks = [proximities.get_proximity(lat, lng, item[0], item[1], item[2]) for item in proximities.proximity_ammenities]
     results = await asyncio.gather(*tasks)
     for result in results:
@@ -107,13 +87,25 @@ async def scrape_amenities(row, postcode):
 
 
 async def scrape_more_features_from_face(row, address, postcode, session):
-    row["epc_rating"], row["sqm"] = await fetcher.get_epc_rating(postcode, session)
-    row["council_tax_band"] = await fetcher.get_council_tax_band(address, postcode)
-    row["crime_rate"] = await fetcher.get_crime_rate(postcode, session)
+    epc_rating_task = fetcher.get_epc_rating(postcode, session)
+    council_tax_band_task = fetcher.get_council_tax_band(address, postcode)
+    crime_rate_task = fetcher.get_crime_rate(postcode, session)
+
+    epc_rating_result, council_tax_band_result, crime_rate_result = await asyncio.gather(
+        epc_rating_task,
+        council_tax_band_task,
+        crime_rate_task
+    )
+
+    row["epc_rating"], row["sqm"] = epc_rating_result
+    row["council_tax_band"] = council_tax_band_result
+    row["crime_rate"] = crime_rate_result
     return row
 
 
-async def scrape_face(page, row):
+async def scrape_face(page, row, address):
+    await asyncio.sleep(2)
+
     feature_locators = [
         ("p:has(span:has-text('number of bedrooms'))", "bedrooms"),
         ("p:has(span:has-text('number of bathrooms'))", "bathrooms"),
@@ -128,7 +120,7 @@ async def scrape_face(page, row):
             feature_locator = page.locator(locator)
 
             if feature_name in ["estate_type", "sold_date"]:
-                feature = await feature_locator.nth(0).text_content(timeout=5000)
+                feature = await feature_locator.nth(0).text_content(timeout=3000)
             else:
                 try:
                     feature = await feature_locator.text_content(timeout=3000)
@@ -137,9 +129,7 @@ async def scrape_face(page, row):
 
             if feature_name in ["property_type", "estate_type"]:
                 feature = feature.split()[-1] if isinstance(feature, str) else pd.NA
-            elif feature_name in ["sold_date", "extra_features"]:
-                pass
-            else:
+            if feature_name in ["bathrooms", "bedrooms"]:
                 try:
                     feature = int(feature.split()[-1])
                 except (ValueError, AttributeError, IndexError):
@@ -152,22 +142,12 @@ async def scrape_face(page, row):
         except Exception as e:
             print(f"Error processing {feature_name}: {str(e)}")
             row[feature_name] = pd.NA
-
     return row
 
 
 # Returns a tuple of the address and the fuzz ratio between it and the target address
 def find_most_similar(full_address, page_listings):
     return max([(item, fuzz.partial_ratio(full_address[0], item)) for item in page_listings])
-
-
-# def get_listing(lines):
-#     locations = []
-#
-#     for line in lines:
-#         if re.match(r'^(?:(?:\d+|Flat\s+\d+|Apartment\s+\d+),\s+[\w\s]+,)', line):
-#             locations.append(line)
-#     return locations
 
 
 async def handle_page_listings(all_page_listings):
@@ -196,7 +176,7 @@ async def scrape_postcode(page, row):
 
     try:
         # Getting listings
-        await asyncio.sleep(5)
+        await asyncio.sleep(2)
         all_page_listings = await page.locator(".results").all()
         page_listings = await handle_page_listings(all_page_listings)
         page_listings = [item.upper() for item in page_listings]
@@ -208,22 +188,19 @@ async def scrape_postcode(page, row):
         async with aiohttp.ClientSession() as session:
             row = await scrape_more_features_from_face(row, address, postcode, session)
 
-        scrape_face_task = scrape_face(page, row)
+        scrape_face_task = scrape_face(page, row, address)
         scrape_amenities_task = scrape_amenities(row, postcode)
         scrape_economic_relations_task = scrape_economic_relations(row)
 
         results = await asyncio.gather(
             scrape_face_task,
             scrape_amenities_task,
-            scrape_economic_relations_task
+            scrape_economic_relations_task,
+            return_exceptions=True
         )
 
         for result in results:
             row.update(result)
-
-        # row = await scrape_face(page, row)
-        # row = await scrape_ammenities(row, postcode)
-        # row = await scrape_economic_relations(row)
 
     except Exception as e:
         print("func: scrape postcode, ", e)
@@ -232,7 +209,7 @@ async def scrape_postcode(page, row):
         return row
 
 
-async def run(row):
+async def run2(row):
     url = "https://www.rightmove.co.uk/house-prices/e1-0ed.html?country=england&searchLocation=E1+0ED"
     try:
         async with async_playwright() as p:
@@ -244,16 +221,10 @@ async def run(row):
             await page.locator("button:has-text('Accept all')").click()
 
 
-            # coroutines = []
-            # for _, row in tqdm(data_2y.iterrows(), total=len(data_2y)):
-            #     coroutines.append(scrape_postcode(page, row))
-            #
-            # updated_rows = await asyncio.gather(*coroutines)
-            # df_updated = pd.DataFrame(updated_rows)
-            # await fetcher.upload_to_bucket(df_updated)
-
             start_time = time.time()
             row = await scrape_postcode(page, row)
+            new_df = pd.DataFrame([row])
+            await fetcher.upload_to_bucket(new_df)
             end_time = time.time()
             print(f"Duration: {end_time - start_time} seconds*")
 
@@ -265,29 +236,21 @@ async def run(row):
         return row
 
 
-# df = data_2y[0: 2]
+def run(row):
+    asyncio.run(run2(row))
+
+
 async def main():
-    chunk_size = 3
+    chunk_size = 5
 
     for i in range(0, len(data_2y), chunk_size):
-        updated_rows = []
-
         chunk = data_2y.iloc[i: i + chunk_size]
-        coroutines = [run(row) for _, row in chunk.iterrows()]
-        chunk_results = await asyncio.gather(*coroutines)
-
-        updated_rows.extend(chunk_results)
-        df_updated = pd.DataFrame(updated_rows)
-        await fetcher.upload_to_bucket(df_updated)
-
-    # coroutines = []
-    # for _, row in tqdm(df.iterrows(), total=len(df)):
-    #     coroutines.append(run(row))
-    # updated_rows = await asyncio.gather(*coroutines)
+        rows = [row for _, row in chunk.iterrows()]
+        with Pool(chunk_size) as p:
+            p.map(run, rows)
 
 
 if __name__ == "__main__":
-    # _, _, _, _, _, data_2y = cleaning.run_clean()
     bank_rate, mortgage_rate, regional_employment, inflation_rate, \
         regional_gdp, data_2y = cleaning.run_clean()
 

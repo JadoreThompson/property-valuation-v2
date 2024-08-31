@@ -4,7 +4,7 @@ import pandas as pd
 
 pd.set_option("display.max_columns", None)
 ROOT_DIR = "../"
-EXTERNAL_DIR = "../data/external/"
+EXTERNAL_DIR = "./data/external/"
 
 
 def clean_bank_rate():

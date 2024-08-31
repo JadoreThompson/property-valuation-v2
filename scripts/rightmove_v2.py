@@ -13,6 +13,9 @@ import numpy as np
 from scripts import cleaning
 from propai import fetcher, proximities
 
+bank_rate, mortgage_rate, regional_employment, inflation_rate, \
+    regional_gdp, data_2y = cleaning.run_clean()
+
 
 async def scrape_economic_relations(row):
     month = {
@@ -252,7 +255,7 @@ async def main():
 
 
 if __name__ == "__main__":
-    bank_rate, mortgage_rate, regional_employment, inflation_rate, \
-        regional_gdp, data_2y = cleaning.run_clean()
+    # bank_rate, mortgage_rate, regional_employment, inflation_rate, \
+    #     regional_gdp, data_2y = cleaning.run_clean()
 
     asyncio.run(main())

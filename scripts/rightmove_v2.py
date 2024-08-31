@@ -241,7 +241,7 @@ def run(row):
 
 
 async def main():
-    chunk_size = 5
+    chunk_size = 10
 
     for i in range(0, len(data_2y), chunk_size):
         chunk = data_2y.iloc[i: i + chunk_size]

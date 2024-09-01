@@ -126,67 +126,6 @@ async def get_school_proximity(lat1, lng1):
     return return_dict
 
 
-# async def get_school_proximity(lat1, lng1):
-#     payload = {
-#         'textQuery': "schools",
-#         'locationBias': {
-#             'circle': {
-#                 'center': {'latitude': lat1, 'longitude': lng1},
-#                 'radius': 50000.0
-#             }
-#         },
-#         'pageSize': 100
-#     }
-#
-#     try:
-#         async with aiohttp.ClientSession() as session:
-#             async with session.post(URL, headers=HEADER, json=payload) as rsp:
-#                 data = await rsp.json()
-#     except Exception:
-#         return {
-#             "primary_school_distance": np.nan,
-#             "primary_school_name": np.nan,
-#             "secondary_school_distance": np.nan,
-#             "secondary_school_name": np.nan
-#         }
-#
-#     schools_dict = []
-#
-#     for school in data["places"]:
-#         if "primary_school" in school["types"]:
-#             schools_dict.append({
-#                 "name": school["displayName"].get("text", np.nan),
-#                 "distance": haversine(lat1, lng1, school["location"].get("latitude", 0), school["location"].get("longitude", 0)),
-#                 "type": "primary"
-#             })
-#
-#         if "secondary_school" in school["types"]:
-#             schools_dict.append({
-#                 "name": school["displayName"].get("text", np.nan),
-#                 "distance": haversine(lat1, lng1, school["location"].get("latitude", np.nan), school["location"].get("longitude", np.nan)),
-#                 "type": "secondary"
-#             })
-#
-#     prim_dis = [item["distance"] for item in schools_dict if item["type"] == "primary"]
-#     sec_dis = [item["distance"] for item in schools_dict if item["type"] == "secondary"]
-#
-#     return_dict = {}
-#
-#     if return_dict:
-#         for item in schools_dict:
-#             if item["distance"] == min(prim_dis) and item["type"] == "primary":
-#                 return_dict.update({
-#                     "primary_school_distance": float(item["distance"]),
-#                     "primary_school_name": item["name"]
-#                 })
-#             if item["distance"] == min(sec_dis) and item["type"] == "secondary":
-#                 return_dict.update({
-#                     "secondary_school_distance": float(item["distance"]),
-#                     "secondary_school_name": item["name"]
-#                 })
-#     return return_dict
-
-
 async def get_proximity(lat1, lng1, nearest, type_to_target, topic_name):
     try:
         payload = {

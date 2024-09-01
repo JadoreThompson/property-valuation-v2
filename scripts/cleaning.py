@@ -81,7 +81,7 @@ def clean_inflation_rate():
         df = df.rename(columns={cpi_col: "cpi_rate"})
         return df
 
-    df1 = clean_inflation_csv("2022-23_inflation_rate.csv", 2022, "cpi 12- \nmonth rate", 12)
+    df1 = clean_inflation_csv("2022-23_inflation_rate.csv", 2022, "cpi 12- \r\nmonth rate", 12)
     df2 = clean_inflation_csv("2023-24_inflation_rate.csv", 2023, "cpi 12- \nmonth \nrate (%)", 6)
     df = pd.concat([df1, df2], axis=0, ignore_index=True)
 

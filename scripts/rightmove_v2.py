@@ -12,8 +12,6 @@ import numpy as np
 from scripts import cleaning
 from propai import fetcher, proximities
 
-bank_rate, mortgage_rate, regional_employment, inflation_rate, \
-    regional_gdp, data_2y = cleaning.run_clean()
 
 async def scrape_economic_relations(row):
     month = {
@@ -105,7 +103,7 @@ async def scrape_more_features_from_face(row, address, postcode, session):
     return row
 
 
-async def scrape_face(page, row, address):
+async def scrape_face(page, row):
     await asyncio.sleep(2)
 
     feature_locators = [
@@ -147,9 +145,36 @@ async def scrape_face(page, row, address):
     return row
 
 
-# Returns a tuple of the address and the fuzz ratio between it and the target address
-def find_most_similar(full_address, page_listings):
-    return max([(item, fuzz.partial_ratio(full_address[0], item)) for item in page_listings])
+def custom_address_comparison(address1, address2):
+    # Split the addresses into parts
+    parts1 = address1.split(',')
+    parts2 = address2.split(',')
+
+    # Compare house numbers
+    number1 = parts1[0].strip()#.split()[0]
+    number2 = parts2[0].strip()#.split()[0]
+
+    # If house numbers are different, heavily penalize the score
+    if number1 != number2:
+        return 50  # You can adjust this base score
+
+    # If house numbers match, use token_set_ratio for the rest of the address
+    rest_of_address1 = ','.join(parts1[1:])
+    rest_of_address2 = ','.join(parts2[1:])
+    return fuzz.token_set_ratio(rest_of_address1, rest_of_address2)
+
+
+def find_most_similar(target_address, page_listings):
+    best_match = None
+    best_score = -1
+
+    for listing in page_listings:
+        score = custom_address_comparison(target_address, listing)
+        if score > best_score:
+            best_score = score
+            best_match = listing
+
+    return best_match, best_score
 
 
 async def handle_page_listings(all_page_listings):
@@ -165,6 +190,10 @@ async def scrape_postcode(page, row):
     await asyncio.sleep(3)
     address = row["address"]
     postcode = row["postcode"]
+    row["full_address"] = row["full_address"].title()
+    parts = row["full_address"].split()
+    parts[-1] = parts[-1][0] + parts[-1][-2:].upper()
+    row["full_address"] = " ".join(parts)
 
     try:
         input_locator = page.locator('input.search-box-input')
@@ -181,18 +210,20 @@ async def scrape_postcode(page, row):
         await asyncio.sleep(2)
         all_page_listings = await page.locator(".results").all()
         page_listings = await handle_page_listings(all_page_listings)
-        page_listings = [item.upper() for item in page_listings]
+        page_listings = [item for item in page_listings]
 
         # Finding most similar
-        most_similar = find_most_similar(address, page_listings)
+        most_similar = find_most_similar(row["full_address"], page_listings)
+        print(f"most sim: {most_similar} for {row["full_address"]}")
         await page.locator(f"a:has-text('{most_similar[0]}')").click(timeout=5000)
 
         async with aiohttp.ClientSession() as session:
             row = await scrape_more_features_from_face(row, address, postcode, session)
 
-        scrape_face_task = scrape_face(page, row, address)
+        scrape_face_task = scrape_face(page, row)
         scrape_amenities_task = scrape_amenities(row, postcode)
         scrape_economic_relations_task = scrape_economic_relations(row)
+
 
         results = await asyncio.gather(
             scrape_face_task,
@@ -215,7 +246,7 @@ async def run2(row):
     url = "https://www.rightmove.co.uk/house-prices/e1-0ed.html?country=england&searchLocation=E1+0ED"
     try:
         async with async_playwright() as p:
-            browser = await p.chromium.launch(headless=True)
+            browser = await p.chromium.launch(headless=False)
             page = await browser.new_page()
 
             # Entering the site
@@ -244,10 +275,15 @@ def run(row):
 
 async def main():
     chunk_size = 5
+    data_for_scraping = data_2y.iloc[233:]
+    data_for_scraping = data_for_scraping.drop_duplicates()
 
-    for i in range(0, len(data_2y), chunk_size):
-        chunk = data_2y.iloc[i: i + chunk_size]
-        rows = [row for _, row in chunk.iterrows()]
-        with Pool(chunk_size) as p:
-            p.map(run, rows)
+    with Pool(chunk_size) as p:
+        for i in range(0, len(data_for_scraping), chunk_size):
+            chunk = data_for_scraping.iloc[i: i + chunk_size]
+            # rows = [row for _, row in chunk.iterrows()]
+            p.map(run, [row for _, row in chunk.iterrows()])
 
+
+bank_rate, mortgage_rate, regional_employment, inflation_rate, \
+    regional_gdp, data_2y = cleaning.run_clean()

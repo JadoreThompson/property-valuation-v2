@@ -144,7 +144,7 @@ def find_town(address):
     match = re.search(pattern, address)
     if match:
         return match.group(1)
-    return np.nan
+    return pd.NA
 
 
 def find_street(address):
@@ -152,7 +152,7 @@ def find_street(address):
     match = re.search(pattern, address)
     if match:
         return match.group(1).strip()
-    return np.nan
+    return pd.NA
 
 
 def find_postcode(address):

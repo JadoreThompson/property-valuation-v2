@@ -47,10 +47,10 @@ def haversine(lat1, lon1, lat2, lon2):
     rad = 6371
     c = 2 * math.asin(math.sqrt(a))
 
-    km = rad * c
+    km = float(rad * c)
     miles = float(km * 0.621371)
 
-    return km
+    return miles
 
 
 async def get_school_proximity(lat1, lng1):

@@ -9,9 +9,11 @@ from thefuzz import fuzz
 from multiprocessing import Pool
 import numpy as np
 
-import cleaning
+from scripts import cleaning
 from propai import fetcher, proximities
 
+bank_rate, mortgage_rate, regional_employment, inflation_rate, \
+    regional_gdp, data_2y = cleaning.run_clean()
 
 async def scrape_economic_relations(row):
     month = {
@@ -249,9 +251,3 @@ async def main():
         with Pool(chunk_size) as p:
             p.map(run, rows)
 
-
-if __name__ == "__main__":
-    bank_rate, mortgage_rate, regional_employment, inflation_rate, \
-        regional_gdp, data_2y = cleaning.run_clean()
-
-    asyncio.run(main())

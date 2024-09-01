@@ -25,7 +25,7 @@ import pandas as pd
 load_dotenv(ROOT_DIR + ".env")
 
 # Google
-os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "prop-llm-80aaec11f50b.json"
+os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = ROOT_DIR + "prop-llm-80aaec11f50b.json"
 
 ONS_TOKEN = os.getenv("ONS_TOKEN")
 ONS_HEADER = {

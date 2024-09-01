@@ -7,7 +7,7 @@ import math
 import aiohttp
 
 
-ROOT_DIR = "../"
+ROOT_DIR = "./"
 load_dotenv(ROOT_DIR + ".env")
 
 # --------Google textSearch-------------

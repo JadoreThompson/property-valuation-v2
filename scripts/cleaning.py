@@ -1,6 +1,6 @@
 import numpy as np
 import pandas as pd
-from dojo import ROOT_DIR
+from app import ROOT_DIR
 import os
 
 pd.set_option("display.max_columns", None)
@@ -159,8 +159,6 @@ def run_clean():
     inflation_rate = clean_inflation_rate()
     regional_gdp = clean_regional_gdp()
     data_2y = clean_lr_data()
-
-    # print(regional_employment)
 
     return bank_rate, mortgage_rate, regional_employment, inflation_rate,\
         regional_gdp, data_2y

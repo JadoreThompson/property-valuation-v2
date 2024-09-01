@@ -18,14 +18,14 @@ from playwright.async_api import async_playwright
 import numpy as np
 from datetime import datetime
 
-from propai.proximities import ROOT_DIR
+from app import ROOT_DIR
 import pandas as pd
 
 
-load_dotenv(ROOT_DIR + ".env")
+load_dotenv(os.path.join(ROOT_DIR, ".env"))
 
 # Google
-os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = ROOT_DIR + "prop-llm-80aaec11f50b.json"
+os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = os.path.join(ROOT_DIR, "prop-llm-80aaec11f50b.json")
 
 ONS_TOKEN = os.getenv("ONS_TOKEN")
 ONS_HEADER = {
@@ -285,7 +285,7 @@ async def upload_to_bucket(df):
     # df = pd.DataFrame(dictionary)
     print("Attempting to upload to bucket...")
     try:
-        storage_client = storage.Client.from_service_account_json(ROOT_DIR + "prop-llm-80aaec11f50b.json")
+        storage_client = storage.Client.from_service_account_json(os.path.join(ROOT_DIR, "prop-llm-80aaec11f50b.json"))
         bucket = storage_client.bucket(bucket_name=os.getenv("BUCKET_NAME"))
         blob = bucket.blob("rightmove{0}.csv".format(datetime.now().strftime("%Y-%m-%d 5H_%M_%S")))
         blob.upload_from_string(df.to_csv(index=False), "text/csv")

@@ -34,9 +34,9 @@ async def scrape_economic_relations(row):
         "regional_gdp"
     ]
 
-    for key, df, id in keys[: 2]:
+    for key, dataframe, id in keys[: 2]:
         try:
-            row[key] = df[(df["year"] == year) & (df["month"] == month)][id].values[0]
+            row[key] = dataframe[(dataframe["year"] == year) & (dataframe["month"] == month)][id].values[0]
         except IndexError:
             row[key] = pd.NA
 
@@ -48,8 +48,8 @@ async def scrape_economic_relations(row):
         except IndexError:
             row["_".join(key.split())] = pd.NA
 
-    if int(row["year"]) < 2024:
-        regional_gdp.set_index('borough', inplace=True)
+    if year < 2024:
+        regional_employment.set_index('borough', inplace=True)
         try:
             row[keys[-2]] = regional_gdp.at[district, '2022']
         except KeyError:
@@ -125,7 +125,7 @@ async def scrape_face(page, row):
                 try:
                     feature = await feature_locator.text_content(timeout=3000)
                 except TimeoutError:
-                    feature = np.nan
+                    feature = pd.NA
 
             if feature_name in ["property_type", "estate_type"]:
                 feature = feature.split()[-1] if isinstance(feature, str) else pd.NA
@@ -133,7 +133,7 @@ async def scrape_face(page, row):
                 try:
                     feature = int(feature.split()[-1])
                 except (ValueError, AttributeError, IndexError):
-                    feature = np.nan
+                    feature = pd.NA
 
             if isinstance(feature, str) and not feature.strip():
                 feature = pd.NA
@@ -223,7 +223,6 @@ async def scrape_postcode(page, row):
         scrape_face_task = scrape_face(page, row)
         scrape_amenities_task = scrape_amenities(row, postcode)
         scrape_economic_relations_task = scrape_economic_relations(row)
-
 
         results = await asyncio.gather(
             scrape_face_task,

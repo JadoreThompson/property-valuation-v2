@@ -5,10 +5,10 @@ import numpy as np
 from dotenv import load_dotenv
 import math
 import aiohttp
+from app import ROOT_DIR
 
 
-ROOT_DIR = "./"
-load_dotenv(ROOT_DIR + ".env")
+load_dotenv(os.path.join(ROOT_DIR, ".env"))
 
 # --------Google textSearch-------------
 URL = "https://places.googleapis.com/v1/places:searchText"

@@ -252,7 +252,7 @@ async def run2(row):
     try:
         async with async_playwright() as p:
             print("Launching browser")
-            browser = await p.chromium.launch(headless=True)
+            browser = await p.chromium.launch()
             page = await browser.new_page()
 
             print("Navigating to URL")
@@ -281,8 +281,9 @@ async def main():
     chunk_size = 5
     print("Starting main function")
 
+    data2 = data_2y[664: ]
     with Pool(chunk_size) as p:
-        for i in range(0, len(data_2y), chunk_size):
-            chunk = data_2y.iloc[i: i + chunk_size]
+        for i in range(0, len(data2), chunk_size):
+            chunk = data2.iloc[i: i + chunk_size]
             print(f"Processing chunk {i // chunk_size + 1}")
             p.map(run, [row for _, row in chunk.iterrows()])

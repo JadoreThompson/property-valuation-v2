@@ -1,7 +1,7 @@
 import asyncio
 import os
 
-import numpy as np
+import pandas as pd
 from dotenv import load_dotenv
 import math
 import aiohttp
@@ -71,10 +71,10 @@ async def get_school_proximity(lat1, lng1):
                 data = await rsp.json()
     except Exception:
         return {
-            "primary_school_distance": np.nan,
-            "primary_school_name": np.nan,
-            "secondary_school_distance": np.nan,
-            "secondary_school_name": np.nan
+            "primary_school_distance": pd.NA,
+            "primary_school_name": pd.NA,
+            "secondary_school_distance": pd.NA,
+            "secondary_school_name": pd.NA
         }
 
     schools_dict = []
@@ -87,24 +87,24 @@ async def get_school_proximity(lat1, lng1):
             try:
                 distance = haversine(lat1, lng1, location.get("latitude"), location.get("longitude"))
             except Exception:
-                distance = np.nan
+                distance = pd.NA
 
             schools_dict.append({
-                "name": school.get("displayName", {}).get("text", np.nan),
+                "name": school.get("displayName", {}).get("text", pd.NA),
                 "distance": distance,
                 "type": "primary" if "primary_school" in school_types else "secondary"
             })
 
     prim_dis = [item["distance"] for item in schools_dict if
-                item["type"] == "primary" and not np.isnan(item["distance"])]
+                item["type"] == "primary" and not pd.isna(item["distance"])]
     sec_dis = [item["distance"] for item in schools_dict if
-               item["type"] == "secondary" and not np.isnan(item["distance"])]
+               item["type"] == "secondary" and not pd.isna(item["distance"])]
 
     return_dict = {
-        "primary_school_distance": np.nan,
-        "primary_school_name": np.nan,
-        "secondary_school_distance": np.nan,
-        "secondary_school_name": np.nan
+        "primary_school_distance": pd.NA,
+        "primary_school_name": pd.NA,
+        "secondary_school_distance": pd.NA,
+        "secondary_school_name": pd.NA,
     }
 
     if prim_dis:
@@ -162,7 +162,7 @@ async def get_proximity(lat1, lng1, nearest, type_to_target, topic_name):
                         topic_name + "_name": item["name"]
                     }
     except Exception as e:
-        print("get proximity: ", e)
+        print("Get Proximity, ", e)
 
 
 def get_central_london_proximity(lat1, lng1):

@@ -32,18 +32,8 @@ def clean_mortgage_rates():
     df["day"] = df["Date"].dt.day
 
     month_mapping = {
-        1: 'Jan',
-        2: 'Feb',
-        3: 'Mar',
-        4: 'Apr',
-        5: 'May',
-        6: 'Jun',
-        7: 'Jul',
-        8: 'Aug',
-        9: 'Sep',
-        10: 'Oct',
-        11: 'Nov',
-        12: 'Dec'
+        1: 'Jan', 2: 'Feb', 3: 'Mar', 4: 'Apr', 5: 'May', 6: 'Jun',
+        7: 'Jul', 8: 'Aug', 9: 'Sep', 10: 'Oct', 11: 'Nov', 12: 'Dec'
     }
     df["month"] = df["month"].map(month_mapping)
     df = df.sort_values(["year", "month", "day"])
@@ -62,6 +52,7 @@ def clean_regional_employment():
     df_melted = df_melted.sort_values(['Area name', 'Year'])
     df_melted = df_melted.reset_index(drop=True)
     df_melted = df_melted.drop_duplicates()
+
     return df_melted
 
 
@@ -123,10 +114,18 @@ def clean_regional_gdp():
     df = df.rename(columns={"LA name": "borough"})
 
     df = df.drop_duplicates()
+
     return df
 
 
 def clean_lr_data():
+    def make_full_address(row):
+        full_address = f"{row['saon']+',' if pd.notna(row['saon']) and row['saon'] != '' else ''} {row['paon']}, {row['street']}, {row["town"]}, {row["county"]} {row["postcode"]}".strip()
+        full_address = full_address.title()
+        parts = full_address.split()
+        parts[-1] = parts[1][0] + parts[-1][-2:].upper()
+        return " ".join(parts)
+
     df = pd.read_csv(os.path.join(EXTERNAL_DIR, "last_2y.csv"))
     cols = [col for col in df.columns][-16:]
     df = df.drop(cols, axis=1)
@@ -135,19 +134,24 @@ def clean_lr_data():
     df = df.rename(columns={
         "deed_date": "sold_date"
     })
+
     df["sold_date"] = pd.to_datetime(df["sold_date"], format="%Y-%m-%d")
     df["year"] = df["sold_date"].dt.year
     df["month"] = df["sold_date"].dt.month
     df["day"] = df["sold_date"].dt.day
+
+    df["estate_type"] = df["estate_type"].map({"L": "Lease", "F": "Freehold"})
     df["property_type"] = df["property_type"].map({"F": "Flat/Maisonette",
                                                    "T": "Terraced",
                                                    "O": "Other",
                                                    "S": "Semi-detached",
                                                    "D": "Detached"
                                                    })
-    df["estate_type"] = df["estate_type"].map({"L": "Lease", "F": "Freehold"})
+
     df["address"] = df.apply(lambda row: f"{row['saon'] if pd.notna(row['saon']) and row['saon'] != '' else ''} {row['paon']} {row['street']}".strip(),axis=1)
-    df["full_address"] = df.apply(lambda row: f"{row['saon']+',' if pd.notna(row['saon']) and row['saon'] != '' else ''} {row['paon']}, {row['street']}, {row["town"]}, {row["county"]} {row["postcode"]}".strip(),axis=1)
+    df["full_address"] = df.apply(lambda row: make_full_address(row), axis=1)
+
+    df = df[df["year"] >= 2022]
     df = df.drop_duplicates(subset=["address"])
     return df
 

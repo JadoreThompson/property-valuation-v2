@@ -170,7 +170,7 @@ async def get_epc_rating(postcode, session):
         if postcode is None:
             return pd.NA
     except Exception as e:
-        print("get epc rating: ", e)
+        print("Get EPC Rating, ", e)
 
     base_url = os.getenv("ONS_API_LINK")
     query_params = {"postcode": postcode}
@@ -228,42 +228,45 @@ async def get_crime_rate(postcode, session):
     return total_rate
 
 
-async def get_council_tax_band(address, postcode):
+async def get_council_tax_band(address, postcode, browser):
     url = "https://www.tax.service.gov.uk/check-council-tax-band/search"
 
-    async with async_playwright() as p:
-        browser = await p.chromium.launch(headless=True)
-        page = await browser.new_page()
-        await page.goto(url)
+    context = await browser.new_context()
+    page = await context.new_page()
+    await page.goto(url)
 
+    try:
+        await page.locator("button:has-text('Reject additional cookies')").click(timeout=3000)
+    except:
+        print("Cookie button not found or already handled")
+        await context.close()
+        return pd.NA
+
+    await page.fill("#postcode", postcode, timeout=3000)
+    await page.keyboard.press("Enter")
+
+    vals = []
+    while True:
         try:
-            await page.locator("button:has-text('Reject additional cookies')").click(timeout=3000)
-        except:
-            print("Cookie button not found or already handled")
+            await page.wait_for_selector(".govuk-table__body", timeout=3000)
+            table_locator = page.locator(".govuk-table__body")
+            content = await table_locator.inner_text(timeout=3000)
 
-        await page.fill("#postcode", postcode, timeout=3000)
-        await page.keyboard.press("Enter")
+            content = content.split("\n")
 
-        vals = []
-        while True:
-            try:
-                await page.wait_for_selector(".govuk-table__body", timeout=3000)
-                table_locator = page.locator(".govuk-table__body")
-                content = await table_locator.inner_text(timeout=3000)
+            for c in content:
+                cu = c.upper()
+                count = fuzz.ratio(address, cu)
+                vals.append({"address": c, "count": count})
 
-                content = content.split("\n")
+            locator = page.locator("a.voa-pagination__link:has(span:has-text('Next'))")
+            await locator.click(timeout=3000)
 
-                for c in content:
-                    cu = c.upper()
-                    count = fuzz.ratio(address, cu)
-                    vals.append({"address": c, "count": count})
+        except Exception as e:
+            print("Get Council Rax Band, ", e)
+            break
 
-                locator = page.locator("a.voa-pagination__link:has(span:has-text('Next'))")
-                await locator.click(timeout=3000)
-
-            except Exception as e:
-                print(e)
-                break
+    await context.close()
 
     maximum = max([v["count"] for v in vals])
 
@@ -281,17 +284,16 @@ async def get_lat_long(postcode):
     return data[0]["geometry"]["location"]["lat"], data[0]["geometry"]["location"]["lng"]
 
 
-async def upload_to_bucket(df):
-    # df = pd.DataFrame(dictionary)
+def upload_to_bucket(df):
     print("Attempting to upload to bucket...")
     try:
         storage_client = storage.Client.from_service_account_json(os.path.join(ROOT_DIR, "prop-llm-80aaec11f50b.json"))
         bucket = storage_client.bucket(bucket_name=os.getenv("BUCKET_NAME"))
-        blob = bucket.blob("rightmove{0}.csv".format(datetime.now().strftime("%Y-%m-%d 5H_%M_%S")))
+        blob = bucket.blob("rightmove{0}.csv".format(datetime.now().strftime("%Y-%m-%d 5H_%M_%S_%f")))
         blob.upload_from_string(df.to_csv(index=False), "text/csv")
         print("Successfully sent to bucket...")
     except Exception as e:
-        print(e)
+        print("Upload to Bucket, ",e)
         pass
 
 

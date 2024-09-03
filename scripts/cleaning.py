@@ -1,7 +1,13 @@
-import numpy as np
+import time
+
 import pandas as pd
-from app import ROOT_DIR
+# from app import ROOT_DIR
+from dojo import ROOT_DIR
 import os
+
+import numpy as np
+from tqdm import tqdm
+tqdm.pandas()
 
 pd.set_option("display.max_columns", None)
 
@@ -168,5 +174,50 @@ def run_clean():
         regional_gdp, data_2y
 
 
+def convert_km_to_miles(row, key):
+    # miles = float(km * 0.621371)
+    return round(row[key] * 0.621371, 2)
+
+
+def clean_internal_data(df):
+    df["price_paid"] = pd.to_numeric(df["price_paid"], errors="coerce", downcast="float").round(2)
+    df["sold_date"] = pd.to_datetime(df["sold_date"], format="%Y-%m-%d")
+    df["saon"], df["paon"] = df["saon"].astype(str), df["paon"].astype(str)
+    df["sqm"] = pd.to_numeric(df["sqm"], errors="coerce", downcast="float").round(2)
+    df["crime_rate"] = df["crime_rate"].astype(np.float16)
+    for key in ["2_year_90%_LTV", "2_year_95%_LTV", "2_year_75%_LTV", "2_year_60%_LTV", "2_year_85%_LTV"]:
+        df[key] = df[key].astype(np.float16)
+
+    for key in ["train_station_distance", "shopping_mall_distance", "leisure_distance", "gym_distance",
+                "park_distance", "proximity_to_london", "primary_school_distance", "secondary_school_distance"]:
+        df[key] = df.progress_apply(lambda row: convert_km_to_miles(row, key), axis=1)
+        df = df.rename(columns={key: key + "_miles"})
+
+    df["bedrooms"] = df["bedrooms"].astype(np.float16).round(2)
+    df["bathrooms"] = df["bathrooms"].astype(np.float16).round(2)
+    return df
+
+
+def begin_clean_internal_data():
+    all_dfs = []
+    error_count = 0
+
+    internal_path = os.path.join(ROOT_DIR, "data", "internal")
+
+    for file in os.listdir(internal_path):
+        df = pd.read_csv(os.path.join(internal_path, file))
+        try:
+            clean_df = clean_internal_data(df)
+            all_dfs.append(clean_df)
+        except:
+            print(f"{file} had an error")
+            error_count += 1
+            continue
+
+    if all_dfs:
+        new_df = pd.concat(all_dfs, ignore_index=True)
+        new_df.to_csv("test.csv", index=False)
+
+
 if __name__ == "__main__":
-    run_clean()
+    begin_clean_internal_data()

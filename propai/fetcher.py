@@ -1,8 +1,12 @@
 import asyncio
 import os
+from datetime import datetime
+import pandas as pd
+import random
 
 import googlemaps
 from google.cloud import storage
+from google.cloud.storage import transfer_manager
 
 from thefuzz import fuzz
 from dotenv import load_dotenv
@@ -10,16 +14,12 @@ from dotenv import load_dotenv
 import re
 import aiohttp
 from urllib.parse import urlencode
-
 import json
 from bs4 import BeautifulSoup
 from playwright.async_api import async_playwright
 
-import numpy as np
-from datetime import datetime
-
-from app import ROOT_DIR
-import pandas as pd
+# from app import ROOT_DIR
+from dojo import ROOT_DIR
 
 
 load_dotenv(os.path.join(ROOT_DIR, ".env"))
@@ -33,8 +33,9 @@ ONS_HEADER = {
     'Authorization': f'Basic {ONS_TOKEN}'
 }
 
+storage_client = storage.Client.from_service_account_json(os.path.join(ROOT_DIR, "prop-llm-80aaec11f50b.json"))
+bucket = storage_client.bucket(bucket_name=os.getenv("BUCKET_NAME"))
 
-import random
 
 user_agents = [
     # Android User Agents
@@ -287,8 +288,6 @@ async def get_lat_long(postcode):
 def upload_to_bucket(df):
     print("Attempting to upload to bucket...")
     try:
-        storage_client = storage.Client.from_service_account_json(os.path.join(ROOT_DIR, "prop-llm-80aaec11f50b.json"))
-        bucket = storage_client.bucket(bucket_name=os.getenv("BUCKET_NAME"))
         blob = bucket.blob("rightmove{0}.csv".format(datetime.now().strftime("%Y-%m-%d 5H_%M_%S_%f")))
         blob.upload_from_string(df.to_csv(index=False), "text/csv")
         print("Successfully sent to bucket...")
@@ -297,6 +296,24 @@ def upload_to_bucket(df):
         pass
 
 
+def download_from_bucket(destination_directory=os.path.join(ROOT_DIR, "data", "internal"), max_results=1000, workers=10):
+    blob_names = [blob.name for blob in bucket.list_blobs()]
+    results = transfer_manager.download_many_to_path(
+        bucket, blob_names, destination_directory=destination_directory, max_workers=workers
+    )
+
+    for name, result in zip(blob_names, results):
+        # The results list is either `None` or an exception for each blob in
+        # the input list, in order.
+
+        if isinstance(result, Exception):
+            print("Failed to download {} due to exception: {}".format(name, result))
+        else:
+            print("Downloaded {} to {}.".format(name, destination_directory + name))
+
+
 if __name__ == "__main__":
-    df = pd.DataFrame(data={"name": [10]})
-    asyncio.run(upload_to_bucket(df))
+    print("Running Fetcher...")
+    # print(len(os.listdir(os.path.join(ROOT_DIR, "data", "internal"))))
+    for file in os.listdir(os.path.join(ROOT_DIR, "data", "internal")):
+        print(file)

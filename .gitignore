@@ -4,4 +4,6 @@ notes.txt
 *.pyc
 *.pyo
 *.pyd
-
+prop-llm-80aaec11f50b.json
+data/internal
+scripts/test.csv

@@ -1,5 +1,7 @@
+import os
 import asyncio
 import time
+from datetime import datetime
 
 import aiohttp
 import pandas as pd
@@ -8,6 +10,7 @@ import re
 from thefuzz import fuzz
 from multiprocessing import Pool
 
+from app import ROOT_DIR
 from scripts import cleaning
 from propai import fetcher, proximities
 
@@ -261,8 +264,12 @@ async def run2(row):
 
             start_time = time.time()
             row = await scrape_postcode(page, row, browser)
+
             new_df = pd.DataFrame([row])
-            fetcher.upload_to_bucket(new_df)
+            # fetcher.upload_to_bucket(new_df)
+            print("Saving to CSV...")
+            new_df.to_csv(os.path.join(ROOT_DIR, "data", "internal", "rightmove{0}.csv".format(datetime.now().strftime("%Y-%m-%d 5H_%M_%S_%f"))), index=False)
+            print("Saved to CSV...")
             end_time = time.time()
             print(f"Duration: {end_time - start_time} seconds")
     except Exception as e:
@@ -281,7 +288,7 @@ async def main():
     chunk_size = 5
     print("Starting main function")
 
-    data2 = data_2y[664: ]
+    data2 = data_2y[4673: ]
     with Pool(chunk_size) as p:
         for i in range(0, len(data2), chunk_size):
             chunk = data2.iloc[i: i + chunk_size]

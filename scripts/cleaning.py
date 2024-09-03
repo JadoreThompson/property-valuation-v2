@@ -1,3 +1,4 @@
+import string
 import time
 
 import pandas as pd
@@ -175,8 +176,15 @@ def run_clean():
 
 
 def convert_km_to_miles(row, key):
-    # miles = float(km * 0.621371)
     return round(row[key] * 0.621371, 2)
+
+
+def filter_invalid_chars(text):
+    valid_chars = set(string.printable)
+    if isinstance(text, str):
+        # Keep only characters in the valid_chars set
+        return ''.join(char for char in text if char in valid_chars)
+    return text
 
 
 def clean_internal_data(df):
@@ -195,6 +203,9 @@ def clean_internal_data(df):
 
     df["bedrooms"] = df["bedrooms"].astype(np.float16).round(2)
     df["bathrooms"] = df["bathrooms"].astype(np.float16).round(2)
+
+    df["year"] = pd.to_numeric(df["year"], downcast="integer")
+    df['park_name'] = df['park_name'].apply(filter_invalid_chars)
     return df
 
 
@@ -216,7 +227,7 @@ def begin_clean_internal_data():
 
     if all_dfs:
         new_df = pd.concat(all_dfs, ignore_index=True)
-        new_df.to_csv("test.csv", index=False)
+        new_df.to_csv("internal_data.csv", index=False)
 
 
 if __name__ == "__main__":

@@ -7,3 +7,5 @@ notes.txt
 prop-llm-80aaec11f50b.json
 data/internal
 scripts/test.csv
+scripts/internal_data.csv
+scripts/internal_data_copy.csv

@@ -5,7 +5,7 @@ import pandas as pd
 from dotenv import load_dotenv
 import math
 import aiohttp
-from app import ROOT_DIR
+from app_scraping import ROOT_DIR
 
 
 load_dotenv(os.path.join(ROOT_DIR, ".env"))

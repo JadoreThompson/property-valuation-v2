@@ -10,7 +10,7 @@ import re
 from thefuzz import fuzz
 from multiprocessing import Pool
 
-from app import ROOT_DIR
+from app_scraping import ROOT_DIR
 from scripts import cleaning
 from propai import fetcher, proximities
 

@@ -1,0 +1,348 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard{% endblock %}
+
+{% block content %}
+<style>
+    .input-container-housing {
+        display: flex;
+        position: fixed;
+        background-color: white;
+        bottom:0;
+        left: 0;
+        right: 0;
+        max-width: 100%;
+        align-items: center;
+        justify-content: center;
+        padding: 0.5rem;
+        z-index: 1000;
+    }
+
+    .input-container {
+        border: 1px solid #08281d;
+        border-radius: 0.5rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 80%;
+        max-width: 100%;
+        box-sizing: border-box;
+    }
+
+    .input-container textarea {
+        border: 0;
+        width: 100%;
+        resize: none;
+        display: flex;
+    }
+
+    textarea:focus {
+        outline: none;
+    }
+
+    i {
+        cursor: pointer;
+        color: white;
+    }
+
+    @media (min-width: 1080px) {
+        .input-container,
+         .all-messages-container {
+            width: 40%;
+        }
+    }
+
+    ul {
+        list-style: none;
+        padding-left: 0;
+        padding-right: 0;
+        margin: 0;
+    }
+
+    li {
+        word-wrap: break-word;
+        overflow: break-word;
+        max-width: 100%;
+    }
+
+    p {
+        padding: 0;
+        margin: 0;
+    }
+
+    /*.llm-container {
+        border-radius: 0.5rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.5rem;
+        margin-bottom: 1.5rem;
+        border: 0.15rem solid #e1c2c2;
+        box-shadow: 1px 1px #e8d0d0;
+        box-sizing: border-box;
+    }
+
+    .llm-container .icon-container {
+        width: 2rem !important;
+        align-self: flex-end;
+        margin-left: 1rem;
+    }
+
+    .outgoing-container {
+        border: 0.15rem solid #79bbfa;
+    }*/
+
+    ul .llm-container {
+        border: 1px solid black;
+        border-radius: 1rem;
+        margin-top: 1rem;
+        margin-bottom: 1rem;
+        background-color: white;
+        padding: 1rem;
+    }
+
+    .incoming-container,
+    .outgoing-container {
+        box-shadow: 0.1rem 0.1rem 0.1rem #e8d0d0;
+        border-radius: 1rem;
+        margin-bottom: 1rem;
+        padding: 1rem;
+    }
+
+    .incoming-container {
+        border: 0.15rem solid #e8d0d0;
+    }
+
+    .incoming-container .icon-container {
+        width: 3rem;
+        padding: 0.2rem;
+        border: 1px solid #e2c4c4;
+        margin-left: auto;
+    }
+
+    .outgoing-container {
+        border: 0.15rem solid #79bbfa;
+    }
+
+    .icon-container {
+        padding: 0;
+        border-radius: 0.5rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .icon-container:hover {
+        filter: brightness(90%);
+    }
+
+    .icon-container i,
+    .icon-container span {
+        font-size: 0.75rem;
+    }
+
+    .icon-container i {
+        margin-right: 0.1rem;
+    }
+
+    .icon-container span {
+    }
+
+    .edit-button-container {
+        border: 1px solid black;
+        margin: 0;
+    }
+
+    .edit-prompt-btn:hover {
+        cursor: pointer;
+    }
+
+    .fa-pencil {
+        color: black;
+    }
+</style>
+
+<main role="main">
+    <!-- All Messages -->
+    <div class="container all-messages-container mt-5 mb-15">
+        <ul id="all-messages">
+            <li>
+                <div class="container incoming-container">
+                    <p>What;s the average price of a home in stratfordaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa</p>
+                    <div class="icon-container edit-button-container edit-prompt-btn">
+                        <i class="fa-solid fa-pencil"></i>
+                        <span>Edit</span>
+                    </div>
+                </div>
+            </li>
+            <li>
+                <div class="container outgoing-container">
+                    <p>the average price of a home in stratford is £500,000</p>
+                </div>
+            </li>
+        </ul>
+    </div>
+
+
+    <div id="loading-wheel" class="loading-screen" style="display: none;">
+        <div class="loader"></div>
+    </div>
+
+    <!--Input prompt container-->
+    <div class="container input-container-housing">
+        <div class="container input-container">
+            <textarea id="user-textarea" placeholder="Enter message"></textarea>
+            <div class="icon-container" style="background-color: #79bbfa; width: 2rem; height: 2rem;">
+                <i id="prompt-submit" class="fa-solid fa-arrow-up" style="color: white; font-size: 1rem; margin: 0;"></i>
+            </div>
+        </div>
+    </div>
+</main>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function(){
+
+        // --------------------------------
+        // Card Generation and Features
+        // --------------------------------
+        // Adding Outgoing Card
+        function addOutgoing(response){
+            const li = document.createElement('li');
+            const div = document.createElement('div');
+            div.className = 'container outgoing-container';
+            const p = document.createElement('p');
+            p.textContent = response;
+
+            div.appendChild(p);
+            li.appendChild(div);
+            const ul = document.querySelector('.all-messages-container ul');
+            ul.appendChild(li);
+        }
+
+        // Adding Incoming Card
+        function addIncoming(prompt){
+            const li = document.createElement('li');
+            const div = document.createElement('div');
+            div.className = 'container incoming-container';
+
+            const p = document.createElement('p');
+            p.textContent = prompt;
+
+            const div2 = document.createElement('div');
+            div2.className = 'icon-container edit-button-container';
+
+            const i = document.createElement('i');
+            i.className = 'fa-solid fa-pencil';
+
+            const span = document.createElement("span");
+            span.textContent = "Edit";
+
+            // Putting all the elements together
+            div2.appendChild(i);
+            div2.appendChild(span);
+
+            div.appendChild(p);
+            div.appendChild(div2);
+
+            li.appendChild(div);
+            const ul = document.querySelector('.all-messages-container ul');
+            ul.appendChild(li);
+        }
+
+        // Edit button on incoming card
+        document.querySelectorAll('.edit-prompt-btn').forEach(button => {
+                button.addEventListener("click", function editHandler(){
+                    // Allowing edit
+                    const div = document.createElement('div');
+                    const textarea = document.createElement('textarea');
+
+                    const container = this.closest('.incoming-container');
+                    const p = container.querySelector('p');
+                    const existingPrompt = p.textContent;
+
+                    textarea.value = existingPrompt;
+                    textarea.style.width = '100%';
+                    p.replaceWith(textarea);
+
+                    // Allowing save
+                    const ogSpan = this.querySelector('span');
+                    ogSpan.textContent = 'Save';
+
+                    this.removeEventListener('click', editHandler);
+                    this.addEventListener('click', async function saveHandler(){
+                        const newPrompt = textarea.value;
+                        const newP = document.createElement('p');
+                        newP.textContent = newPrompt;
+
+                        textarea.replaceWith(newP);
+                        this.removeEventListener('click', saveHandler);
+                        ogSpan.textContent = 'Edit';
+
+                        /*
+                            Removing the visual traces of the chat so that we can load from
+                            that point onward
+                        */
+                        let nextElement = container.parentElement.nextElementSibling;
+                        while (nextElement) {
+                            nextElement.remove();
+                            nextElement = container.parentElement.nextElementSibling;
+                        }
+
+                        loadingWheel.style.display = "flex";
+                        rsp = await getPromptResponse(newPrompt);
+                        addOutgoing(rsp.response);
+                        loadingWheel.style.display = "none";
+                    });
+                });
+        });
+
+        // ----------------------------------
+        // Processing User Prompt
+        // -----------------------------------
+        async function getPromptResponse(prompt) {
+            const response = await fetch("http://127.0.0.1:80/get-response", {
+                method: "POST",
+                headers: {"Content-Type": "application/json"},
+                body: JSON.stringify({message: prompt})
+            });
+
+            const data = await response.json();
+            return data
+        }
+
+        const textArea = document.getElementById("user-textarea");
+        const promptSubmit = document.getElementById("prompt-submit");
+        const loadingWheel = document.getElementById("loading-wheel");
+
+        textArea.addEventListener("keypress", function(e){
+            if (e.key === "Enter" && !e.shiftKey && textArea.value.trim()){
+                addIncoming(textArea.value);
+                loadingWheel.style.display = "flex";
+                promptSubmit.click();
+            }
+        });
+
+        promptSubmit.addEventListener("click", async function(e){
+            e.preventDefault();
+
+            let userPrompt = textArea.value.trim();
+            textArea.value = '';
+
+            const response = await fetch("http://127.0.0.1:80/get-response", {
+                method: "POST",
+                headers: {"Content-Type": "application/json"},
+                body: JSON.stringify({message: userPrompt})
+            });
+
+            const data = await response.json();
+            if (response.ok){
+                loadingWheel.style.display = "none";
+                addOutgoing(data.response);
+            } else {
+                loadingWheel.style.display = "none";
+                addOutgoing("Sorry, something went wrong");
+            }
+        });
+    });
+</script>
+{% endblock %}

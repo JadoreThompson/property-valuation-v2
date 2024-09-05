@@ -203,10 +203,10 @@
         .user-input-textarea {
             border: 1px solid black;
             resize: both;
-            box-sizing: border-box;
+            /*box-sizing: border-box;*/
             outline: black;
             max-height: 300px; /* Set the maximum height */
-            min-height: 2rem; /* Set a minimum height for better usability */
+            min-height: 0.5rem; /* Set a minimum height for better usability */
             width: 100%;/* Make the textarea full width */
         }
 
@@ -216,8 +216,8 @@
     </style>
     <!--Input prompt container-->
     <div class="container input-container-housing">
-        <div class="container input-container">
-            <textarea class="user-input-textarea" id="user-textarea" placeholder="Enter message"></textarea>
+        <div class="container input-container" style="display: flex; justify-content: center; align-items: center;">
+            <textarea style="height: 35px;" class="user-input-textarea" id="user-textarea" placeholder="Enter message"></textarea>
             <div class="icon-container" style="background-color: #79bbfa; width: 2rem; height: 2rem;">
                 <i id="prompt-submit" class="fa-solid fa-arrow-up" style="color: white; font-size: 1rem; margin: 0;"></i>
             </div>

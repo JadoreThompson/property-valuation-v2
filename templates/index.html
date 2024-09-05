@@ -3,5 +3,41 @@
 {% block title %}Home{% endblock %}
 
 {% block content %}
-<h1>Hi</h1>
+<style>
+    textarea {
+        border: 1px solid black;
+        resize: both;
+        box-sizing: border-box;
+        outline: black;
+        max-height: 300px; /* Set the maximum height */
+        min-height: 100px; /* Set a minimum height for better usability */
+         /* Make the textarea full width */
+    }
+
+    textarea:focus {
+        outline: black;
+    }
+</style>
+<textarea id="my-textarea" placeholder="Type here"></textarea>
+<script>
+    const textarea = document.getElementById('my-textarea');
+
+    function adjustHeight() {
+        textarea.style.height = 'auto';
+        const newHeight = Math.min(textarea.scrollHeight, 300); // 300px is the max height
+        textarea.style.height = `${newHeight}px`;
+
+        // Enable or disable scrolling based on content height
+        textarea.style.overflowY = textarea.scrollHeight > 300 ? 'auto' : 'hidden';
+    }
+
+    // Initial adjustment
+    adjustHeight();
+
+    // Adjust on input
+    textarea.addEventListener('input', adjustHeight);
+
+    // Adjust on window resize
+    window.addEventListener('resize', adjustHeight);
+</script>
 {% endblock %}

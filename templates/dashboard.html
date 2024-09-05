@@ -195,10 +195,25 @@
         <div class="loader"></div>
     </div>
 
+    <style>
+        .user-input-textarea {
+            border: 1px solid black;
+            resize: both;
+            box-sizing: border-box;
+            outline: black;
+            max-height: 300px; /* Set the maximum height */
+            min-height: 2rem; /* Set a minimum height for better usability */
+            width: 100%;/* Make the textarea full width */
+        }
+
+        .user-input-textarea:focus {
+            outline: black;
+        }
+    </style>
     <!--Input prompt container-->
     <div class="container input-container-housing">
         <div class="container input-container">
-            <textarea id="user-textarea" placeholder="Enter message"></textarea>
+            <textarea class="user-input-textarea" id="user-textarea" placeholder="Enter message"></textarea>
             <div class="icon-container" style="background-color: #79bbfa; width: 2rem; height: 2rem;">
                 <i id="prompt-submit" class="fa-solid fa-arrow-up" style="color: white; font-size: 1rem; margin: 0;"></i>
             </div>
@@ -213,26 +228,23 @@
         const loadingWheel = document.getElementById("loading-wheel");
         const messageContainer = document.querySelector('.all-messages-container ul');
 
-        // Auto expand textarea height
-        const textAreaHeightLimit = 200; // Maximum height of 200px
-        var limitRows = 5;
-        var messageLastScrollHeight = textArea.scrollHeight;
+        /*
+            Auto expand textarea height for user input textarea
+        */
+        function adjustHeight() {
+            textArea.style.height = 'auto';
+            const newHeight = Math.min(textArea.scrollHeight, 300); // 300px is the max height
+            textArea.style.height = `${newHeight}px`;
 
-        textArea.oninput = function() {
-            var rows = parseInt(textArea.getAttribute("rows"));
-            // If we don't decrease the amount of rows, the scrollHeight would show the scrollHeight for all the rows
-            // even if there is no text.
-            textArea.setAttribute("rows", "1");
+            // Enable or disable scrolling based on content height
+            textArea.style.overflowY = textArea.scrollHeight > 300 ? 'auto' : 'hidden';
+        }
+        // Initial adjustment
+        adjustHeight();
+        textArea.addEventListener('input', adjustHeight);
+        // Adjust on window resize
+        window.addEventListener('resize', adjustHeight);
 
-            if (rows < limitRows && textArea.scrollHeight > messageLastScrollHeight) {
-                rows++;
-            } else if (rows > 1 && textArea.scrollHeight < messageLastScrollHeight) {
-                rows--;
-            }
-
-            messageLastScrollHeight = textArea.scrollHeight;
-            textArea.setAttribute("rows", rows);
-        };
 
         /*
             --------------------------------

@@ -3,10 +3,11 @@ from dotenv import load_dotenv
 from urllib.parse import quote
 from datetime import datetime, timedelta
 
-from operator import itemgetter
+from langchain_community.vectorstores import FAISS
+from langchain_core.example_selectors import SemanticSimilarityExampleSelector
+from langchain_google_genai import GoogleGenerativeAIEmbeddings
 from langchain_community.utilities import SQLDatabase
 from langchain_google_genai import ChatGoogleGenerativeAI
-from langchain_core.prompts import ChatPromptTemplate
 from langchain_community.agent_toolkits import create_sql_agent
 from langchain_core.prompts import (
     ChatPromptTemplate,
@@ -26,6 +27,7 @@ LANGCHAIN_TRACING_V2 = True
 LANGCHAIN_ENDPOINT = "https://api.smith.langchain.com"
 LANGCHAIN_API_KEY = str(os.getenv("LANGCHAIN_API_KEY"))
 LANGCHAIN_PROJECT = "pr-roasted-prefix-54"
+
 
 few_shot_examples = [
     {
@@ -85,10 +87,6 @@ few_shot_examples = [
     }
 ]
 
-from langchain_community.vectorstores import FAISS
-from langchain_core.example_selectors import SemanticSimilarityExampleSelector
-from langchain_google_genai import GoogleGenerativeAIEmbeddings
-
 query_example_selector = SemanticSimilarityExampleSelector.from_examples(
     few_shot_examples,
     GoogleGenerativeAIEmbeddings(model="models/embedding-001"),
@@ -97,7 +95,8 @@ query_example_selector = SemanticSimilarityExampleSelector.from_examples(
     input_keys=["input"],
 )
 
-system_prefix = """You are an agent designed to interact with a SQL database.
+system_prefix = """
+You are an agent designed to interact with a SQL database.
 Given an input question, create a syntactically correct {dialect} query to run, then look at the results of the query and return the answer.
 Unless the user specifies a specific number of examples they wish to obtain, always limit your query to at most {top_k} results.
 You can order the results by a relevant column to return the most interesting examples in the database.
@@ -111,7 +110,8 @@ DO NOT make any DML statements (INSERT, UPDATE, DELETE, DROP etc.) to the databa
 If the question does not seem related to the database, just return "I don't know" as the answer. If you try to query a particular
 district and it doesn't work. use the LIKE ability to make it work. for example SELECT price_paid FROM property_data WHERE district LIKE '%KENSINGTON%';
 
-Here are some examples of user inputs and their corresponding SQL queries:"""
+Here are some examples of user inputs and their corresponding SQL queries:
+"""
 
 few_shot_prompt = FewShotPromptTemplate(
     example_selector=query_example_selector,
@@ -147,5 +147,7 @@ llm = ChatGoogleGenerativeAI(
 )
 
 sql_agent = create_sql_agent(llm=llm, db=db, agent_type="tool-calling", verbose=True, prompt=full_prompt)
+
+sql_agent.invoke({"question"})
 
 

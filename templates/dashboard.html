@@ -360,13 +360,13 @@
 
         async function getPromptResponse(prompt) {
             try {
-                const rsp = await fetch("http://127.0.0.1:80/get-response", {
+                const rsp = await fetch("/get-response", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({ message: prompt })
                 });
 
-                if (!rsp.ok) {
+                if (rsp.status != 200) {
                     throw new Error();
                 }
 

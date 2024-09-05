@@ -1,8 +1,9 @@
 from flask import Blueprint, jsonify, request, render_template, redirect, url_for
 import json
+
 from forms import ContactSalesForm
 from db_connection import get_db_conn
-
+from propai import prompt_gen
 
 views = Blueprint("views", __name__)
 
@@ -57,3 +58,23 @@ def contact_sales():
 @views.route("/dashboard")
 def dashboard():
     return render_template("dashboard.html")
+
+
+'''
+Prompt Response
+'''
+@views.route('/get-response', methods=["POST"])
+def get_response():
+    body = request.get_json()
+    if body["message"]:
+        try:
+            rsp = prompt_gen.sql_agent.invoke({"input": body["message"]})
+            result = rsp["output"]
+            if result:
+                return jsonify({"status": 200, "response": result})
+        except Exception as e:
+            print(f"Get Response: {str(e)}")
+            return jsonify({"status": 404, "message": "Sorry I couldn't answer that, try something else"})
+    else:
+        print(f"Get Response: Invalid request")
+        return jsonify({"status": 429, "message": "Invalid request"})

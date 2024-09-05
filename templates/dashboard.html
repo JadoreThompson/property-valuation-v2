@@ -161,11 +161,15 @@
     .fa-pencil {
         color: black;
     }
+
+    .all-messages-container {
+        bottom: 2.5rem;
+    }
 </style>
 
 <main role="main">
     <!-- All Messages -->
-    <div class="container all-messages-container mt-5 mb-15">
+    <div class="container all-messages-container mt-5 mb-7"><!-- mb-15">-->
         <ul id="all-messages">
             <li>
                 <div class="container incoming-container">
@@ -251,7 +255,11 @@
             Functions relating to the cards
             --------------------------------
         */
-        // Adding Outgoing Card
+        function scrollToNewContainer(container) {
+            container.scrollIntoView({behavior: 'smooth', block: 'end'});
+        }
+
+        //Making card editable
         function makeEditable(button) {
             container = button.parentElement.parentElement;
             button.addEventListener('click', function editHandler(){
@@ -300,6 +308,7 @@
             });
         }
 
+        // Adding Outgoing Card
         async function addOutgoing(prompt) {
             if (prompt.trim()) {
                 loadingWheel.style.display = 'flex';
@@ -319,6 +328,8 @@
                 loadingWheel.style.display = 'none';
 
                 ul.appendChild(li);
+
+                scrollToNewContainer(div);
             }
         }
 
@@ -366,6 +377,7 @@
             const ul = document.querySelector('.all-messages-container ul');
             ul.appendChild(li);
             makeEditable(actionEdit);
+            scrollToNewContainer(div);
         }
 
         async function getPromptResponse(prompt) {

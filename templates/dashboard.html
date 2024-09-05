@@ -296,7 +296,6 @@
                     loadingWheel.style.display = 'flex';
                     await addOutgoing(newTextArea.value);
                     this.removeEventListener('click', saveHandler);
-                    console.log("This:", this);
                 });
             });
         }
@@ -370,9 +369,8 @@
         }
 
         async function getPromptResponse(prompt) {
-            console.log("This is the prompt I got: ", prompt);
             try {
-                const rsp = await fetch("http://127.0.0.1:80/get-response", {
+                const rsp = await fetch("https://127.0.0.1:80/get-response", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({ message: prompt })
@@ -397,18 +395,15 @@
         */
         textArea.addEventListener("keypress", function(e) {
             if (e.key === "Enter" && !e.shiftKey && textArea.value.trim()) {
-                addIncoming(textArea.value);
-                loadingWheel.style.display = "flex";
                 promptSubmit.click();
             }
         });
 
         promptSubmit.addEventListener("click", async function(e) {
-            e.preventDefault();
-
-            let userPrompt = textArea.value.trim();
+            //e.preventDefault();
+            addIncoming(textArea.value);
+            let userPrompt = textArea.value;
             textArea.value = '';
-
             await addOutgoing(userPrompt);
         });
     });

@@ -244,7 +244,6 @@
             textArea.style.overflowY = textArea.scrollHeight > 300 ? 'auto' : 'hidden';
         }
         // Initial adjustment
-        //adjustHeight();
         textArea.addEventListener('input', adjustHeight);
         // Adjust on window resize
         window.addEventListener('resize', adjustHeight);
@@ -263,7 +262,6 @@
         function makeEditable(button) {
             container = button.parentElement.parentElement;
             button.addEventListener('click', function editHandler(){
-                //container = button.parentElement.parentElement;
                 const originalP = container.querySelector('p');
                 const originalPrompt = originalP.textContent;
                 const originalSpan = container.querySelector('.action-toolbar .edit-prompt-btn span');
@@ -382,7 +380,7 @@
 
         async function getPromptResponse(prompt) {
             try {
-                const rsp = await fetch("https://127.0.0.1:80/get-response", {
+                const rsp = await fetch("http://127.0.0.1:80/get-response", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({ message: prompt })

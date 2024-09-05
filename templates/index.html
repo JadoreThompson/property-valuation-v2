@@ -4,40 +4,138 @@
 
 {% block content %}
 <style>
-    textarea {
-        border: 1px solid black;
-        resize: both;
-        box-sizing: border-box;
-        outline: black;
-        max-height: 300px; /* Set the maximum height */
-        min-height: 100px; /* Set a minimum height for better usability */
-         /* Make the textarea full width */
+    .landing-container,
+    .page-container {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
     }
 
-    textarea:focus {
-        outline: black;
+    .landing-container {
+        height: 100vh;
+    }
+
+    .landing-jumbotron {
+        text-align: center;
+    }
+
+    .span-container {
+        width: 50%;
+        text-align: center;
+    }
+
+    .span-container span {
+        color: grey;
+    }
+
+    .landing-jumbotron .span-container span {
+        color: grey;
+    }
+
+    .landing-jumbotron h1 {
+        font-size: 3rem;
+    }
+
+    .btn-tertiary {
+        color: white;
+        background-color: #1F3A93;
+        margin: auto;
+        display: flex;
+        padding: 0.5rem;
+        align-items: center;
+    }
+
+    .btn-tertiary:hover {
+        color: white;
+        background-color: #1F3A93;
+        box-shadow: 1px 1px !important;
+    }
+
+    .btn-tertiary:active {
+        color: white !important;
+        background-color: #1F3A93 !important;
+    }
+
+    .demo-container video{
+        width: 100%;
+        /*border: 1px solid black;*/
+        border-radius: 0.5rem;
+    }
+
+    .footer {
+        width: 100%;
     }
 </style>
-<textarea id="my-textarea" placeholder="Type here"></textarea>
-<script>
-    const textarea = document.getElementById('my-textarea');
 
-    function adjustHeight() {
-        textarea.style.height = 'auto';
-        const newHeight = Math.min(textarea.scrollHeight, 300); // 300px is the max height
-        textarea.style.height = `${newHeight}px`;
+<section>
+    <div class="container landing-container page-container">
+        <div class="jumbotron landing-jumbotron">
+            <h1>Real Time Market Insights</h1>
+        </div>
+        <div class="span-container">
+            <span>Lorem ipsum odor amet, consectetuer adipiscing elit. Senectus ut litora ipsum integer vulputate sociosqu pharetra.</span>
+        </div>
+    </div>
+</section>
 
-        // Enable or disable scrolling based on content height
-        textarea.style.overflowY = textarea.scrollHeight > 300 ? 'auto' : 'hidden';
-    }
+<section>
+    <div class="container page-container"> <!-- landing-container">-->
+        <div class="jumbotron landing-jumbotron">
+            <h1>Product</h1>
+        </div>
+        <div class="span-container">
+            <span>Automate your property research for residential markets</span>
+        </div>
+        <div class="container demo-container mt-5">
+            <video src="{{ url_for('static', filename='videos/Fortnite   2024-03-15 18-59-25.mp4') }}"></video>
+        </div>
+    </div>
+</section>
 
-    // Initial adjustment
-    adjustHeight();
+<footer class="footer row row-cols-1 row-cols-sm-2 row-cols-md-5 py-5 my-5 border-top">
+    <div class="col mb-3">
+      <a href="/" class="d-flex align-items-center mb-3 link-body-emphasis text-decoration-none">
+        <svg class="bi me-2" width="40" height="32"><use xlink:href="#bootstrap"></use></svg>
+      </a>
+      <p class="text-body-secondary">© 2024</p>
+    </div>
 
-    // Adjust on input
-    textarea.addEventListener('input', adjustHeight);
+    <div class="col mb-3">
 
-    // Adjust on window resize
-    window.addEventListener('resize', adjustHeight);
-</script>
+    </div>
+
+    <div class="col mb-3">
+      <h5>Section</h5>
+      <ul class="nav flex-column">
+        <li class="nav-item mb-2"><a href="#" class="nav-link p-0 text-body-secondary">Home</a></li>
+        <li class="nav-item mb-2"><a href="#" class="nav-link p-0 text-body-secondary">Features</a></li>
+        <li class="nav-item mb-2"><a href="#" class="nav-link p-0 text-body-secondary">Pricing</a></li>
+        <li class="nav-item mb-2"><a href="#" class="nav-link p-0 text-body-secondary">FAQs</a></li>
+        <li class="nav-item mb-2"><a href="#" class="nav-link p-0 text-body-secondary">About</a></li>
+      </ul>
+    </div>
+
+    <div class="col mb-3">
+      <h5>Section</h5>
+      <ul class="nav flex-column">
+        <li class="nav-item mb-2"><a href="#" class="nav-link p-0 text-body-secondary">Home</a></li>
+        <li class="nav-item mb-2"><a href="#" class="nav-link p-0 text-body-secondary">Features</a></li>
+        <li class="nav-item mb-2"><a href="#" class="nav-link p-0 text-body-secondary">Pricing</a></li>
+        <li class="nav-item mb-2"><a href="#" class="nav-link p-0 text-body-secondary">FAQs</a></li>
+        <li class="nav-item mb-2"><a href="#" class="nav-link p-0 text-body-secondary">About</a></li>
+      </ul>
+    </div>
+
+    <div class="col mb-3">
+      <h5>Section</h5>
+      <ul class="nav flex-column">
+        <li class="nav-item mb-2"><a href="#" class="nav-link p-0 text-body-secondary">Home</a></li>
+        <li class="nav-item mb-2"><a href="#" class="nav-link p-0 text-body-secondary">Features</a></li>
+        <li class="nav-item mb-2"><a href="#" class="nav-link p-0 text-body-secondary">Pricing</a></li>
+        <li class="nav-item mb-2"><a href="#" class="nav-link p-0 text-body-secondary">FAQs</a></li>
+        <li class="nav-item mb-2"><a href="#" class="nav-link p-0 text-body-secondary">About</a></li>
+      </ul>
+    </div>
+  </footer>
 {% endblock %}

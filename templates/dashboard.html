@@ -240,7 +240,7 @@
             textArea.style.overflowY = textArea.scrollHeight > 300 ? 'auto' : 'hidden';
         }
         // Initial adjustment
-        adjustHeight();
+        //adjustHeight();
         textArea.addEventListener('input', adjustHeight);
         // Adjust on window resize
         window.addEventListener('resize', adjustHeight);
@@ -266,6 +266,15 @@
                 newTextArea.className = 'textarea';
 
                 originalP.replaceWith(newTextArea);
+                newTextArea.addEventListener('input', function adjHeight() {
+                    newTextArea.style.height = 'auto';
+                    const newHeight = Math.min(newTextArea.scrollHeight, 300); // 300px is the max height
+                    newTextArea.style.height = `${newHeight}px`;
+
+                    // Enable or disable scrolling based on content height
+                    newTextArea.style.overflowY = newTextArea.scrollHeight > 300 ? 'auto' : 'hidden';
+                });
+
                 originalSpan.textContent = 'Save';
 
                 this.removeEventListener('click', editHandler);

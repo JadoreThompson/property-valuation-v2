@@ -205,7 +205,7 @@
             <div class="action-parent" style="display: flex; justify-content: center;">
                 <div class="action-container">
                     <button style="margin-right: 1rem;" class="btn btn-tertiary">Contact Sales</button>
-                    <button class="btn btn-sixth">Try For Free</button>
+                    <button id="tryForFreeBtn" class="btn btn-sixth">Try For Free</button>
                 </div>
             </div>
         </div>
@@ -357,6 +357,8 @@
         const contactSalesSubmitBtn = document.getElementById('contactSalesSubmitBtn');
         const contactSalesForm = document.getElementById('contactSalesForm');
 
+        const tryForFreeBtn = document.getElementById('tryForFreeBtn');
+
         /*
            -------------------------
                 Contact Sales Code
@@ -413,17 +415,9 @@
             }
         };
 
-        /*
-            ------------------------
-                Styling functions
-            ------------------------
-        const btnSecondary = document.querySelectorAll('.btn-secondary');
-        btnSecondary.forEach(button => {
-            button.addEventListener('mousedown', function(){
-                button.style.backgroundColor = '#ffffff';
-            });
+        tryForFreeBtn.addEventListener('click', function(){
+            window.location.href = '/dashboard';
         });
-        */
     });
 </script>
 {% endblock %}

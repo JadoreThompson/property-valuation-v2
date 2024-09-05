@@ -169,7 +169,7 @@
         <ul id="all-messages">
             <li>
                 <div class="container incoming-container">
-                    <p>What;s the average price of a home in stratfordaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa</p>
+                    <p>***What;s the average price of a home in stratford***</p>
                     <div class="action-toolbar">
                         <div class="action cancel-edit-btn">
                             <i class="fa-solid fa-x"></i>
@@ -213,62 +213,6 @@
         const loadingWheel = document.getElementById("loading-wheel");
         const messageContainer = document.querySelector('.all-messages-container ul');
 
-        // Event delegation for dynamically created edit buttons
-        messageContainer.addEventListener("click", function(event) {
-            if (event.target.closest('.edit-prompt-btn')) {
-                const button = event.target.closest('.edit-prompt-btn');
-                makeEditable(button);
-                button.click();
-            }
-        });
-
-        function makeEditable(button) {
-            // Allowing edit
-            button.addEventListener('click', function editHandler(){
-                const container = button.closest('.incoming-container');
-                const p = container.querySelector('p');
-                const existingPrompt = p.textContent;
-
-                const textarea = document.createElement('textarea');
-                textarea.value = existingPrompt;
-
-                textarea.style.width = '100%';
-                p.replaceWith(textarea);
-
-                // Allowing save
-                const ogSpan = button.querySelector('span');
-                ogSpan.textContent = 'Save';
-
-                button.removeEventListener('click', editHandler);
-
-                button.addEventListener('click', async function saveHandler() {
-                    const newPrompt = textarea.value.trim();
-                    const newP = document.createElement('p');
-                    newP.textContent = newPrompt;
-
-                    textarea.replaceWith(newP);
-                    ogSpan.textContent = 'Edit';
-
-                    /*
-                        Removing the visual traces of the chat so that we can load from
-                        that point onward
-                    */
-                    let nextElement = container.parentElement.nextElementSibling;
-                    while (nextElement) {
-                        nextElement.remove();
-                        nextElement = container.parentElement.nextElementSibling;
-                    }
-
-                    loadingWheel.style.display = "flex";
-                    const rsp = await getPromptResponse(newPrompt);
-                    loadingWheel.style.display = "none";
-                    addOutgoing(rsp.response);
-
-                    button.removeEventListener('click', saveHandler);
-                }, { once: true });
-            });
-        }
-
         // Auto expand textarea height
         const textAreaHeightLimit = 200; // Maximum height of 200px
         var limitRows = 5;
@@ -290,18 +234,70 @@
             textArea.setAttribute("rows", rows);
         };
 
+        /*
+            --------------------------------
+            Functions relating to the cards
+            --------------------------------
+        */
         // Adding Outgoing Card
-        function addOutgoing(response) {
-            if (response.trim()) {
+        function makeEditable(button) {
+            container = button.parentElement.parentElement;
+            button.addEventListener('click', function editHandler(){
+                //container = button.parentElement.parentElement;
+                const originalP = container.querySelector('p');
+                const originalPrompt = originalP.textContent;
+                const originalSpan = container.querySelector('.action-toolbar .edit-prompt-btn span');
+
+                const newTextArea = document.createElement('textarea');
+                newTextArea.value = originalPrompt;
+                newTextArea.style.width = '100%';
+                newTextArea.className = 'textarea';
+
+                originalP.replaceWith(newTextArea);
+                originalSpan.textContent = 'Save';
+
+                this.removeEventListener('click', editHandler);
+
+                this.addEventListener('click', async function saveHandler(){
+                    originalP.textContent = newTextArea.value;
+                    newTextArea.replaceWith(originalP);
+
+                    originalSpan.textContent = 'Edit';
+
+                    // Removing all the cards that came after this card, discarding
+                    // visual trace of chat history
+                    let nextElement = container.parentElement.nextElementSibling;
+                    while(nextElement) {
+                        nextElement.remove();
+                        nextElement = container.parentElement.nextElementSibling;
+                    }
+
+                    loadingWheel.style.display = 'flex';
+                    await addOutgoing(newTextArea.value);
+                    this.removeEventListener('click', saveHandler);
+                    console.log("This:", this);
+                });
+            });
+        }
+
+        async function addOutgoing(prompt) {
+            if (prompt.trim()) {
+                loadingWheel.style.display = 'flex';
+
+                const rsp = await getPromptResponse(prompt);
+
                 const li = document.createElement('li');
                 const div = document.createElement('div');
                 div.className = 'container outgoing-container';
                 const p = document.createElement('p');
-                p.textContent = response;
+                p.textContent = rsp;
 
                 div.appendChild(p);
                 li.appendChild(div);
                 const ul = document.querySelector('.all-messages-container ul');
+
+                loadingWheel.style.display = 'none';
+
                 ul.appendChild(li);
             }
         }
@@ -349,20 +345,35 @@
             li.appendChild(div);
             const ul = document.querySelector('.all-messages-container ul');
             ul.appendChild(li);
+            makeEditable(actionEdit);
         }
 
         async function getPromptResponse(prompt) {
-            const response = await fetch("http://127.0.0.1:80/get-response", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ message: prompt })
-            });
+            console.log("This is the prompt I got: ", prompt);
+            try {
+                const rsp = await fetch("http://127.0.0.1:80/get-response", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ message: prompt })
+                });
 
-            const data = await response.json();
-            console.log("API Response: ", data);
-            return data;
+                if (!rsp.ok) {
+                    throw new Error();
+                }
+
+                const data = await rsp.json();
+                return data.response;
+
+            } catch(error) {
+                return "Sorry, it seems something went wrong";
+            }
         }
 
+        /*
+            -------------------------------------------
+            Functions for the user input container
+            -------------------------------------------
+        */
         textArea.addEventListener("keypress", function(e) {
             if (e.key === "Enter" && !e.shiftKey && textArea.value.trim()) {
                 addIncoming(textArea.value);
@@ -377,21 +388,7 @@
             let userPrompt = textArea.value.trim();
             textArea.value = '';
 
-            const response = await fetch("http://127.0.0.1:80/get-response", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ message: userPrompt })
-            });
-
-            const data = await response.json();
-            if (response.ok) {
-                loadingWheel.style.display = "none";
-                addOutgoing(data.response);
-            } else {
-                loadingWheel.style.display = "none";
-                addOutgoing("Sorry, something went wrong");
-            }
-            console.log("Data: ", data)
+            await addOutgoing(userPrompt);
         });
     });
 </script>

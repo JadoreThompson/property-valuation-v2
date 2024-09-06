@@ -12,6 +12,7 @@ from langchain_community.agent_toolkits import create_sql_agent
 from langchain_core.prompts import (
     ChatPromptTemplate,
     FewShotPromptTemplate,
+    FewShotChatMessagePromptTemplate,
     MessagesPlaceholder,
     PromptTemplate,
     SystemMessagePromptTemplate,
@@ -70,9 +71,9 @@ few_shot_examples = [
     {
         "input": "what's change in house prices between last year and this year for kensington",
         "query":  f"""
-                        SELECT ((AVG(CASE WHEN year = {datetime.today().year} THEN price_paid END) -
-                        AVG(CASE WHEN year = {(datetime.today() - timedelta(days=365)).year} THEN price_paid END)) / 
-                        AVG(CASE WHEN year = {(datetime.today() - timedelta(days=365)).year} THEN price_paid END)) * 100 AS percentage_change
+                        SELECT ((AVG(CASE WHEN year = {datetime.today().year} THEN price_paid END)) -
+                        (AVG(CASE WHEN year = {(datetime.today() - timedelta(days=365)).year} THEN price_paid END))) / 
+                        AVG(CASE WHEN year = {(datetime.today() - timedelta(days=365)).year} THEN price_paid END) * 100 AS percentage_change
                         FROM property_data
                         WHERE district LIKE '%KENSINGTON%';
                     """
@@ -82,73 +83,29 @@ few_shot_examples = [
         "query": f"""
                         SELECT COUNT(*)
                         FROM property_data
-                        WHERE district = 'ENFIELD' AND year = {datetime.today().year};
+                        WHERE district = 'ENFIELD' AND year = {(datetime.today() - timedelta(days=365)).year};
                     """
     }
 ]
 
-query_example_selector = SemanticSimilarityExampleSelector.from_examples(
-    few_shot_examples,
-    GoogleGenerativeAIEmbeddings(model="models/embedding-001"),
-    FAISS,
-    k=5,
-    input_keys=["input"],
+# Prompt template to format each few shot example
+example_prompt = ChatPromptTemplate.from_messages([
+    ("human", "{input}"),
+    ("ai", "{query}"),
+])
+few_shot_prompt = FewShotChatMessagePromptTemplate(
+    example_prompt=example_prompt,
+    examples=few_shot_examples,
 )
 
-system_prefix = """
-You are an agent designed to interact with a SQL database.
-Given an input question, create a syntactically correct {dialect} query to run, then look at the results of the query and return the answer.
-Unless the user specifies a specific number of examples they wish to obtain, always limit your query to at most {top_k} results.
-You can order the results by a relevant column to return the most interesting examples in the database.
-Never query for all the columns from a specific table, only ask for the relevant columns given the question.
-You have access to tools for interacting with the database.
-Only use the given tools. Only use the information returned by the tools to construct your final answer.
-You MUST double check your query before executing it. If you get an error while executing a query, rewrite the query and try again.
+# Above we use the keys from the few shot examples and format into the example prompt for the model to know how to respond
+final_prompt = ChatPromptTemplate.from_messages([
+    ("system", """You're a information powerhouse and real estate assistant playing the role of an assistant for professionals in the
+               industry"""),
+    few_shot_prompt,
+    ("human", "{input}"),
+])
 
-DO NOT make any DML statements (INSERT, UPDATE, DELETE, DROP etc.) to the database.
-
-If the question does not seem related to the database, just return "I don't know" as the answer. If you try to query a particular
-district and it doesn't work. use the LIKE ability to make it work. for example SELECT price_paid FROM property_data WHERE district LIKE '%KENSINGTON%';
-
-When the output is relating to prices or prices are being spoken about ensure that you use proper formatting. That means putting only one pound sign before the number
-and commas for every thousand. Ensure that your response is in an informative yet soft tone, making the user want to engage more.
-Only return the answer to the question, the user doesn't want to see the SQL statement
-"""
-
-# Designing the few shot prompt to give model examples of SQL queries to run, increasing reliability and consistency
-few_shot_prompt = FewShotPromptTemplate(
-    example_selector=query_example_selector,
-    example_prompt=PromptTemplate.from_template(
-        "User input: {input}\nSQL query: {query}"
-    ),
-    input_variables=["input", "dialect", "top_k"],
-    prefix=system_prefix,
-    suffix="",
-)
-
-full_prompt = ChatPromptTemplate.from_messages(
-    [
-        SystemMessagePromptTemplate(prompt=few_shot_prompt),
-        ("human", "{input}"),
-        MessagesPlaceholder("agent_scratchpad"),
-    ]
-)
-
-# Connecting to Database
-DB_PASSWORD = quote(os.getenv("DB_PASSWORD"), safe='')
-db = SQLDatabase.from_uri(
-    f"postgresql+psycopg2://{os.getenv("DB_USER")}:{DB_PASSWORD}@{os.getenv("DB_HOST")}/{os.getenv("DB_NAME")}")
-
-# Declaring LLM and Agent
-llm = ChatGoogleGenerativeAI(
-    model="gemini-1.5-flash",
-    temperature=0, # Altering this, affects the pendulum of creativity and accuracy, for the latter you want it lower
-    max_tokens=None,
-    timeout=None,
-    max_retries=2,
-    google_api_key=os.getenv("GEMINI_API_KEY")
-)
-
-sql_agent = create_sql_agent(llm=llm, db=db, agent_type="tool-calling", verbose=True, prompt=full_prompt)
-
-# sql_agent.invoke({"input": "average price of a house in enfield"})
+chain = final_prompt | ChatGoogleGenerativeAI(model="gemini-1.5-flash", temperature=0.0)
+rsp = chain.invoke({"input": "based on this years statistics, which areas have grown the most in average price"})
+print(rsp.content)

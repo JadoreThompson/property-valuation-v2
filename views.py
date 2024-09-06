@@ -31,7 +31,7 @@ def contact_sales():
                             SELECT 1
                             FROM contact_sales
                             WHERE email = %s;
-                        """, (body["email"], ))
+                        """, (body["email"],))
                         ex_user = cur.fetchone()
                         if ex_user:
                             return jsonify({"status": 409, "message": "Something went wrong"}), 409
@@ -43,7 +43,7 @@ def contact_sales():
                         cur.execute(f"""
                             INSERT INTO contact_sales ({", ".join(cols)})
                             VALUES ({", ".join(["%s"] * len(cols))});
-                        """, ([(body[key], ) for key in cols]))
+                        """, ([(body[key],) for key in cols]))
                         conn.commit()
                         return jsonify({"status": 200, "message": "Successfully signed up"}), 200
                     except Exception as e:

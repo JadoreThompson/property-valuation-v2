@@ -110,7 +110,8 @@ DO NOT make any DML statements (INSERT, UPDATE, DELETE, DROP etc.) to the databa
 If the question does not seem related to the database, just return "I don't know" as the answer. If you try to query a particular
 district and it doesn't work. use the LIKE ability to make it work. for example SELECT price_paid FROM property_data WHERE district LIKE '%KENSINGTON%';
 
-Here are some examples of user inputs and their corresponding SQL queries:
+When the output is relating to prices or prices are being spoken about ensure that you use proper formatting. That means putting only one pound sign before the number
+and commas for every thousand. Ensure that your response is in an informative yet soft tone, making the user want to engage more.
 """
 
 # Designing the few shot prompt to give model examples of SQL queries to run, increasing reliability and consistency
@@ -123,14 +124,6 @@ few_shot_prompt = FewShotPromptTemplate(
     prefix=system_prefix,
     suffix="",
 )
-
-tone_prompt = """
-You're playing the role of an information provider and assistant for people in the real estate industry. You are to
-speak in a pleasant yet stern tone ensuring accuracy in information and correct output of numbers. For example instead of 
-outputting:
- - 'The average price of a home in Enfield is 599999'. You  would do 'The average price of a home in Enfield is £599,999.
-
-"""
 
 full_prompt = ChatPromptTemplate.from_messages(
     [
@@ -156,3 +149,5 @@ llm = ChatGoogleGenerativeAI(
 )
 
 sql_agent = create_sql_agent(llm=llm, db=db, agent_type="tool-calling", verbose=True, prompt=full_prompt)
+
+sql_agent.invoke({"input": "average price of a house in enfield"})

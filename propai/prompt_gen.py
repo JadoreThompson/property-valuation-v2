@@ -113,6 +113,7 @@ district and it doesn't work. use the LIKE ability to make it work. for example 
 Here are some examples of user inputs and their corresponding SQL queries:
 """
 
+# Designing the few shot prompt to give model examples of SQL queries to run, increasing reliability and consistency
 few_shot_prompt = FewShotPromptTemplate(
     example_selector=query_example_selector,
     example_prompt=PromptTemplate.from_template(
@@ -122,6 +123,14 @@ few_shot_prompt = FewShotPromptTemplate(
     prefix=system_prefix,
     suffix="",
 )
+
+tone_prompt = """
+You're playing the role of an information provider and assistant for people in the real estate industry. You are to
+speak in a pleasant yet stern tone ensuring accuracy in information and correct output of numbers. For example instead of 
+outputting:
+ - 'The average price of a home in Enfield is 599999'. You  would do 'The average price of a home in Enfield is £599,999.
+
+"""
 
 full_prompt = ChatPromptTemplate.from_messages(
     [
@@ -139,7 +148,7 @@ db = SQLDatabase.from_uri(
 # Declaring LLM and Agent
 llm = ChatGoogleGenerativeAI(
     model="gemini-1.5-flash",
-    temperature=0,
+    temperature=0, # Altering this, affects the pendulum of creativity and accuracy, for the latter you want it lower
     max_tokens=None,
     timeout=None,
     max_retries=2,
@@ -147,7 +156,3 @@ llm = ChatGoogleGenerativeAI(
 )
 
 sql_agent = create_sql_agent(llm=llm, db=db, agent_type="tool-calling", verbose=True, prompt=full_prompt)
-
-sql_agent.invoke({"question"})
-
-

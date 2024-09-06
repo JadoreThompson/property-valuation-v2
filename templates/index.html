@@ -143,7 +143,7 @@
         align-items: center;
     }
 
-    .demo-container iframe{
+    .demo-container video{
         width: 50%;
         border-radius: 0.5rem;
     }
@@ -222,7 +222,9 @@
             <span>Automate your property research for residential markets</span>
         </div>
         <div class="container demo-container mt-5">
-            <iframe src="https://www.youtube.com/embed/-j_5AqMjno8"></iframe>
+            <video controls>
+                <source src="{{ url_for('static', filename='videos/Fortnite   2024-03-15 18-59-25.mp4') }}" type="video/mp4">
+            </video>
         </div>
     </div>
 </section>

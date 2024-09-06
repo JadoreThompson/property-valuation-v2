@@ -5,6 +5,7 @@ from forms import ContactSalesForm
 from db_connection import get_db_conn
 from propai import prompt_gen
 
+
 views = Blueprint("views", __name__)
 
 

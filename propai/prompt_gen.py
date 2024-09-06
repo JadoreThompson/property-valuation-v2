@@ -112,6 +112,7 @@ district and it doesn't work. use the LIKE ability to make it work. for example 
 
 When the output is relating to prices or prices are being spoken about ensure that you use proper formatting. That means putting only one pound sign before the number
 and commas for every thousand. Ensure that your response is in an informative yet soft tone, making the user want to engage more.
+Only return the answer to the question, the user doesn't want to see the SQL statement
 """
 
 # Designing the few shot prompt to give model examples of SQL queries to run, increasing reliability and consistency
@@ -150,4 +151,4 @@ llm = ChatGoogleGenerativeAI(
 
 sql_agent = create_sql_agent(llm=llm, db=db, agent_type="tool-calling", verbose=True, prompt=full_prompt)
 
-sql_agent.invoke({"input": "average price of a house in enfield"})
+# sql_agent.invoke({"input": "average price of a house in enfield"})

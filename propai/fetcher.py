@@ -161,12 +161,13 @@ def find_postcode(address):
     return "".join(postcode)
 
 
-'''
-    Returns a list of:
-        - EPC rating
-        - SQM
-'''
 async def get_epc_rating(postcode, session):
+    '''
+        :param postcode:
+        :param session:
+        :return: Tuple(epc_rating, total sqm)
+    '''
+
     try:
         if postcode is None:
             return pd.NA
@@ -195,10 +196,13 @@ async def get_epc_rating(postcode, session):
             return epc_items[i]
 
 
-'''
-    Returns the crime rate per thousand as a float
-'''
 async def get_crime_rate(postcode, session):
+    '''
+        :param postcode:
+        :param session:
+        :return: float(total_crime_rate)
+    '''
+
     postcode = "".join(postcode.split())
 
     def extract_total_rate(html_content):
@@ -229,7 +233,14 @@ async def get_crime_rate(postcode, session):
     return total_rate
 
 
-async def get_council_tax_band(address, postcode, browser):
+async def get_council_tax_band(target_address, postcode, browser):
+    '''
+        :param target_address:
+        :param postcode:
+        :param browser:
+        :return: str(council_tax_band)
+    '''
+
     url = "https://www.tax.service.gov.uk/check-council-tax-band/search"
 
     context = await browser.new_context()
@@ -255,10 +266,10 @@ async def get_council_tax_band(address, postcode, browser):
 
             content = content.split("\n")
 
-            for c in content:
-                cu = c.upper()
-                count = fuzz.ratio(address, cu)
-                vals.append({"address": c, "count": count})
+            for item in content:
+                cu = item.upper()
+                count = fuzz.ratio(target_address, cu)
+                vals.append({"address": item, "count": count})
 
             locator = page.locator("a.voa-pagination__link:has(span:has-text('Next'))")
             await locator.click(timeout=3000)
@@ -280,6 +291,10 @@ async def get_council_tax_band(address, postcode, browser):
 
 
 async def get_lat_long(postcode):
+    '''
+    :param postcode:
+    :return: tuple(lat, long)
+    '''
     gmaps = googlemaps.Client(key=os.getenv("GOOGLE_MAPS_API_KEY"))
     data = gmaps.geocode(f"{postcode}, EN")
     return data[0]["geometry"]["location"]["lat"], data[0]["geometry"]["location"]["lng"]

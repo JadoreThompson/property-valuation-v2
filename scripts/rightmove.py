@@ -22,6 +22,11 @@ regional_gdp.set_index("borough", inplace=True)
 
 
 async def scrape_economic_relations(row):
+    '''
+    :param row:
+    :return: Updated pandas row
+    '''
+
     print("Starting scrape_economic_relations")
     month = {
         1: "Jan", 2: "Feb", 3: "Mar", 4: "Apr", 5: "May", 6: "Jun",
@@ -80,6 +85,12 @@ async def scrape_economic_relations(row):
 
 
 async def scrape_amenities(row, postcode):
+    '''
+    :param row:
+    :param postcode:
+    :return: Updated pandas row
+    '''
+
     print(f"Starting scrape_amenities for {postcode}")
     lat, lng = await fetcher.get_lat_long(postcode)
     row["lat"], row["lng"] = lat, lng
@@ -99,6 +110,15 @@ async def scrape_amenities(row, postcode):
 
 
 async def scrape_more_features_from_face(row, address, postcode, session, browser):
+    '''
+        :param row:
+        :param address:
+        :param postcode:
+        :param session:
+        :param browser:
+        :return: Updated pandas row
+    '''
+
     print(f"Starting scrape_more_features_from_face for {address}, {postcode}")
     epc_rating_task = fetcher.get_epc_rating(postcode, session)
     council_tax_band_task = fetcher.get_council_tax_band(address, postcode, browser)
@@ -117,6 +137,13 @@ async def scrape_more_features_from_face(row, address, postcode, session, browse
 
 
 async def scrape_face(page, row):
+    '''
+        :param page:
+        :param row:
+        :return: updated pandas row after scraping all features from the particular
+                    listing's page
+    '''
+
     print(f"Starting scrape_face")
     await asyncio.sleep(2)
 
@@ -159,6 +186,12 @@ async def scrape_face(page, row):
 
 
 def custom_address_comparison(address1, address2):
+    '''
+        :param address1:
+        :param address2:
+        :return: similarity ratio
+    '''
+
     parts1 = address1.split(',')
     parts2 = address2.split(',')
 
@@ -174,6 +207,11 @@ def custom_address_comparison(address1, address2):
 
 
 def find_most_similar(target_address, page_listings):
+    '''
+    :param target_address:
+    :param page_listings:
+    :return: tuple(address with highest similarity, highest similarity score)
+    '''
     best_match = None
     best_score = -1
 
@@ -187,6 +225,10 @@ def find_most_similar(target_address, page_listings):
 
 
 async def handle_page_listings(all_page_listings):
+    '''
+    :param all_page_listings:
+    :return: list(all addresses)
+    '''
     all_listings = []
     print("Handling page listings")
     for _, item in enumerate(all_page_listings, 1):
@@ -199,6 +241,13 @@ async def handle_page_listings(all_page_listings):
 
 
 async def scrape_postcode(page, row, browser):
+    '''
+    :param page:
+    :param row:
+    :param browser:
+    :return: Updated pandas row
+    '''
+
     await asyncio.sleep(3)
     address = row["address"]
     postcode = row["postcode"]
@@ -251,6 +300,11 @@ async def scrape_postcode(page, row, browser):
 
 
 async def run2(row):
+    '''
+    :param row:
+    :return: Updated pandas row
+    '''
+
     url = "https://www.rightmove.co.uk/house-prices/e1-0ed.html?country=england&searchLocation=E1+0ED"
     try:
         async with async_playwright() as p:

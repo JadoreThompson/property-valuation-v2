@@ -16,6 +16,10 @@ EXTERNAL_DIR = os.path.join(ROOT_DIR, "data", "external")
 
 
 def clean_bank_rate():
+    '''
+        :return: pandas_dataframe(Bank of England bank rate)
+    '''
+
     df = pd.read_csv(os.path.join(EXTERNAL_DIR, "bank_rate.csv"))
     df.columns = df.columns.str.lower()
     df = df.drop_duplicates()
@@ -49,6 +53,10 @@ def clean_mortgage_rates():
 
 
 def clean_regional_employment():
+    '''
+        :return: Regional Employment Rate UK
+    '''
+
     df = pd.read_csv(os.path.join(EXTERNAL_DIR, "regional_employment_rate.csv"))
 
     df = df.dropna()
@@ -64,6 +72,10 @@ def clean_regional_employment():
 
 
 def clean_inflation_rate():
+    '''
+        :return: pandas dataframe, 2022 to 2024 inflation rates UK
+    '''
+
     def columns(df):
         cols = [col for col in df.columns]
         cols[0] = "year"
@@ -113,6 +125,10 @@ def clean_inflation_rate():
 
 
 def clean_regional_gdp():
+    '''
+        :return: pandas dataframe
+    '''
+
     df = pd.read_excel(
         io=os.path.join(EXTERNAL_DIR, "regional_gdp.xlsx"), sheet_name=3, engine="openpyxl", skiprows=1)
 
@@ -126,6 +142,9 @@ def clean_regional_gdp():
 
 
 def clean_lr_data():
+    '''
+        :return: pandas dataframe of 2022 - 2024 sold houses in london
+    '''
     def make_full_address(row):
         full_address = f"{row['saon']+',' if pd.notna(row['saon']) and row['saon'] != '' else ''} {row['paon']}, {row['street']}, {row["town"]}, {row["county"]} {row["postcode"]}".strip()
         full_address = full_address.title()
@@ -164,6 +183,9 @@ def clean_lr_data():
 
 
 def run_clean():
+    '''
+        :return: all dataframes
+    '''
     bank_rate = clean_bank_rate()
     mortgage_rate = clean_mortgage_rates()
     regional_employment = clean_regional_employment()

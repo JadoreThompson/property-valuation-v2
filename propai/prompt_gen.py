@@ -3,25 +3,26 @@ from dotenv import load_dotenv
 from urllib.parse import quote
 from datetime import datetime, timedelta
 
-from langchain_community.vectorstores import FAISS
+# LangChain Modules
+from langchain_google_genai import ChatGoogleGenerativeAI
+from langchain_core.prompts import ChatPromptTemplate, FewShotPromptTemplate, PromptTemplate, \
+    SystemMessagePromptTemplate, MessagesPlaceholder
+from langchain_core.output_parsers import StrOutputParser
+from langchain_core.runnables import RunnablePassthrough
+from langchain_community.utilities import SQLDatabase
+from langchain_community.agent_toolkits import create_sql_agent
 from langchain_core.example_selectors import SemanticSimilarityExampleSelector
 from langchain_google_genai import GoogleGenerativeAIEmbeddings
-from langchain_community.utilities import SQLDatabase
-from langchain_google_genai import ChatGoogleGenerativeAI
-from langchain_community.agent_toolkits import create_sql_agent
-from langchain_core.prompts import (
-    ChatPromptTemplate,
-    FewShotPromptTemplate,
-    FewShotChatMessagePromptTemplate,
-    MessagesPlaceholder,
-    PromptTemplate,
-    SystemMessagePromptTemplate,
-)
+from langchain_community.vectorstores import FAISS
 
-from dojo import ROOT_DIR
+# Directory modules
+from propai.agent_tools import access_internet
 
 
-load_dotenv(os.path.join(ROOT_DIR, ".env"))
+load_dotenv("../.env")
+
+
+# Environment Variables
 os.environ["GOOGLE_API_KEY"] = os.getenv("GEMINI_API_KEY")
 
 LANGCHAIN_TRACING_V2 = True
@@ -29,8 +30,78 @@ LANGCHAIN_ENDPOINT = "https://api.smith.langchain.com"
 LANGCHAIN_API_KEY = str(os.getenv("LANGCHAIN_API_KEY"))
 LANGCHAIN_PROJECT = "pr-roasted-prefix-54"
 
+DB_PASSWORD = quote(os.getenv("DB_PASSWORD"))
+DB = SQLDatabase.from_uri(
+    f"postgresql+psycopg2://{os.getenv("DB_USER")}:{DB_PASSWORD}@{os.getenv("DB_HOST")}/{os.getenv("DB_NAME")}")
 
+
+# Defining LLM
+LLM = ChatGoogleGenerativeAI(model="gemini-1.5-flash", temperature=0.0)
+
+
+# Templates
+RESPONSE_TEMPLATE = """\
+You are an expert analyst in the real estate industry tasked with answering\
+a broad range of questions.
+
+Generate an informative, comprehensive and coherent response\
+all the while maintaining a concise structure. Your response should be based around\
+the provided search results (content) and data from within our database.\
+You should use a helpful tone. Combine the search results and the data together to form your response.\
+You should use bullet points in your answer for readability when necessary. When talking about prices\
+remember to put only one pound sign at the beginning of the number and commas for every thousand\
+as well as rounding to the nearest pound. 
+
+If there is nothing in the context relevant to the question at hand,\
+just respond with "Hmm, that one I'm not sure about".
+
+Anything between the following 'context' block is retrieved form a knowledge bank\
+and is not part of the conversation between the user.
+
+<context>
+    {context}
+<context/>
+
+REMEMBER: If there is no relevant context, simply reply with "Hmm, that one I'm not sure about".
+
+Question: {input}
+"""
+
+FEW_SHOT_PREFIX = """
+You are an agent designed to interact with a SQL database.\
+Given an input question, create a syntactically correct {dialect} query to run,\
+then look at the results of the query and return the answer.
+
+Unless the user specifies a specific number of examples they wish to obtain, always limit your query\
+to at most {top_k} results.You can order the results by a relevant column to return the most interesting examples\
+ in the database.Never query for all the columns from a specific table, only ask for the relevant columns given the question.
+You have access to tools for interacting with the database.
+
+Only use the given tools. Only use the information returned by the tools to construct your final answer.
+You MUST double check your query before executing it. If you get an error while executing a query, rewrite the query\
+and try again.
+
+DO NOT make any DML statements (INSERT, UPDATE, DELETE, DROP etc.) to the database.
+
+If the question does not seem related to the database, just return "I don't know" as the answer.\
+If you try to query a particular district and it doesn't work. use the LIKE ability to make it work. for example\
+SELECT price_paid FROM property_data WHERE district LIKE '%KENSINGTON%';
+
+When the output is relating to prices or prices are being spoken about ensure that you use proper formatting.\
+That means putting only one pound sign before the number.
+"""
+
+# Few Shot Examples
+# TODO: Add more examples with wider range (may improve consistency)
 few_shot_examples = [
+    {
+        "input": "what's the average price of a house in london",
+        "query": f"""
+                            SELECT AVG(price_paid)
+                            FROM property_data
+                            WHERE town = 'LONDON';
+                        """
+    },
     {
         "input": "what's a trend you can see from the house prices last year and this year for enfield",
         "query": f"""
@@ -71,9 +142,9 @@ few_shot_examples = [
     {
         "input": "what's change in house prices between last year and this year for kensington",
         "query":  f"""
-                        SELECT ((AVG(CASE WHEN year = {datetime.today().year} THEN price_paid END)) -
-                        (AVG(CASE WHEN year = {(datetime.today() - timedelta(days=365)).year} THEN price_paid END))) / 
-                        AVG(CASE WHEN year = {(datetime.today() - timedelta(days=365)).year} THEN price_paid END) * 100 AS percentage_change
+                        SELECT ((AVG(CASE WHEN year = {datetime.today().year} THEN price_paid END) -
+                        AVG(CASE WHEN year = {(datetime.today() - timedelta(days=365)).year} THEN price_paid END)) / 
+                        AVG(CASE WHEN year = {(datetime.today() - timedelta(days=365)).year} THEN price_paid END)) * 100 AS percentage_change
                         FROM property_data
                         WHERE district LIKE '%KENSINGTON%';
                     """
@@ -83,29 +154,84 @@ few_shot_examples = [
         "query": f"""
                         SELECT COUNT(*)
                         FROM property_data
-                        WHERE district = 'ENFIELD' AND year = {(datetime.today() - timedelta(days=365)).year};
+                        WHERE district = 'ENFIELD' AND year = {datetime.today().year};
                     """
     }
 ]
 
-# Prompt template to format each few shot example
-example_prompt = ChatPromptTemplate.from_messages([
-    ("human", "{input}"),
-    ("ai", "{query}"),
-])
-few_shot_prompt = FewShotChatMessagePromptTemplate(
-    example_prompt=example_prompt,
-    examples=few_shot_examples,
+
+# Configuring SQL Agent
+"""We Use this to retrieve the most relating items in the few shot examples list"""
+few_shot_example_selector = SemanticSimilarityExampleSelector.from_examples(
+    few_shot_examples,
+    GoogleGenerativeAIEmbeddings(model="models/embedding-001"),
+    FAISS,
+    k=5,
+    input_keys=["input"]
 )
 
-# Above we use the keys from the few shot examples and format into the example prompt for the model to know how to respond
-final_prompt = ChatPromptTemplate.from_messages([
-    ("system", """You're a information powerhouse and real estate assistant playing the role of an assistant for professionals in the
-               industry"""),
-    few_shot_prompt,
-    ("human", "{input}"),
+few_shot_prompt = FewShotPromptTemplate(
+    example_selector=few_shot_example_selector,
+    example_prompt=PromptTemplate.from_template(
+        "User Input: {input}\nSQL Query:{query}\n\n"    # Using the keys from the few shot examples to create the prompt
+    ),
+    input_variables=["input", "dialect", "top_k"],
+    prefix=FEW_SHOT_PREFIX,
+    suffix="",
+)
+
+sql_agent_prompt = ChatPromptTemplate.from_messages([
+        SystemMessagePromptTemplate(prompt=few_shot_prompt),
+        ("human", "{input}"),
+        MessagesPlaceholder("agent_scratchpad"),
 ])
 
-chain = final_prompt | ChatGoogleGenerativeAI(model="gemini-1.5-flash", temperature=0.0)
-rsp = chain.invoke({"input": "based on this years statistics, which areas have grown the most in average price"})
-print(rsp.content)
+SQL_AGENT = create_sql_agent(llm=LLM, db=DB, verbose=True, agent_type="tool-calling", prompt=sql_agent_prompt)
+
+# Defining Chain
+llm_prompt = ChatPromptTemplate.from_template(RESPONSE_TEMPLATE)
+
+# TODO: Make access internet and SQL Agent run in parallel
+CHAIN = (
+    # {"context": access_internet, "input": RunnablePassthrough()}
+    # ^ Invocation
+    llm_prompt  # The keys above are fed to the prompt
+    | LLM  # Prompt is then fed to LLM
+    | StrOutputParser() # LLM Output is the fed through the Parser to a str
+)
+
+
+async def context_chain(question:str) -> dict:
+    '''
+    :param question:
+    :return:
+        - dict:
+            - internet_results: List[str]
+            - sql_result: str
+    '''
+
+    # Task for getting SQL Agent and Access to input
+    access_internet_task = asyncio.create_task(access_internet(question))
+    sql_agent_task = asyncio.create_task(SQL_AGENT.ainvoke({"input": question}))
+
+    access_internet_result, sql_agent_result = await asyncio.gather(
+        access_internet_task, sql_agent_task
+    )
+
+    return {
+        "internet_result": access_internet_result,
+        "sql_result": sql_agent_result
+    }
+
+
+# Example Usage
+async def main():
+    question = "average price of a house in london"
+    context = await context_chain(question)
+    response = await CHAIN.ainvoke({"context": context, "input": question})
+    print("Response: ", response)
+
+
+import asyncio
+if __name__ == "__main__":
+    asyncio.run(main())

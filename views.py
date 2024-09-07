@@ -9,17 +9,22 @@ from propai import prompt_gen
 views = Blueprint("views", __name__)
 
 
-'''
-    All landing page functions
-'''
 @views.route("/")
 def index():
+    '''
+        :return: Landing Page
+    '''
     form = ContactSalesForm()
     return render_template("index.html", form=form)
 
 
 @views.route("/contact-sales", methods=["POST"])
 def contact_sales():
+    '''
+        :body: {ContactSalesForm}
+        :return:
+    '''
+
     try:
         body = request.get_json()
         print(body)
@@ -53,23 +58,25 @@ def contact_sales():
         return jsonify({"status": 500, "message": "Something went wrong, please try again"}), 500
 
 
-'''
-    Dashboard related
-'''
 @views.route("/dashboard")
 def dashboard():
+    '''
+        :return: dashboard page
+    '''
     return render_template("dashboard.html")
 
 
-'''
-Prompt Response
-'''
 @views.route('/get-response', methods=["POST"])
 def get_response():
+    '''
+        :return: 200, response
+        :return: 404, something went wrong with the agent
+        :return: 429, {'message': str} not sent in the body
+    '''
     body = request.get_json()
     if body["message"]:
         try:
-            rsp = prompt_gen.sql_agent.invoke({"input": body["message"]})
+            rsp = prompt_gen.SQL_AGENT.invoke({"input": body["message"]})
             result = rsp["output"]
             if result:
                 return jsonify({"status": 200, "response": result})

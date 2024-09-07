@@ -20,6 +20,9 @@ conn_pool = psycopg2.pool.SimpleConnectionPool(minconn=1, maxconn=50, **conn_par
 
 @contextmanager
 def get_db_conn():
+    '''
+        :yield: DB Connection Object
+    '''
     conn = conn_pool.getconn()
     try:
         yield conn

@@ -65,24 +65,3 @@ def dashboard():
     '''
     return render_template("dashboard.html")
 
-
-@views.route('/get-response', methods=["POST"])
-def get_response():
-    '''
-        :return: 200, response
-        :return: 404, something went wrong with the agent
-        :return: 429, {'message': str} not sent in the body
-    '''
-    body = request.get_json()
-    if body["message"]:
-        try:
-            rsp = prompt_gen.SQL_AGENT.invoke({"input": body["message"]})
-            result = rsp["output"]
-            if result:
-                return jsonify({"status": 200, "response": result})
-        except Exception as e:
-            print(f"Get Response: {str(e)}")
-            return jsonify({"status": 404, "message": "Sorry I couldn't answer that, try something else"})
-    else:
-        print(f"Get Response: Invalid request")
-        return jsonify({"status": 429, "message": "Invalid request"})

@@ -4,8 +4,12 @@ document.addEventListener("DOMContentLoaded", function() {
     const loadingWheel = document.getElementById("loading-wheel");
 
     /*
+    -------------------------------------------------------------
         Auto expand textarea height for user input textarea
+    -------------------------------------------------------------
     */
+    // :param:
+    // :return: new height for text area per line addition
     function adjustHeight() {
         textArea.style.height = 'auto';
         const newHeight = Math.min(textArea.scrollHeight, 300); // 300px is the max height
@@ -21,21 +25,28 @@ document.addEventListener("DOMContentLoaded", function() {
 
 
     /*
-        --------------------------------
-        Functions relating to the cards
-        --------------------------------
+    -----------------------------------------------------------
+    Functions relating to the incoming and outgoing cards
+    ----------------------------------------------------------
     */
     function scrollToNewContainer(container) {
         container.scrollIntoView({behavior: 'smooth', block: 'end'});
     }
 
     // Making card editable
+    // :param: element containing the edit button
+    // : return: Edit event listener
     function makeEditable(button) {
         const container = button.parentElement.parentElement;
         const actionCancel = container.querySelector('.action-toolbar .cancel-edit-btn');
         const originalP = container.querySelector('p');
         const originalSpan = container.querySelector('.action-toolbar .edit-prompt-btn span');
 
+        // Event Listener for edit button
+        // :param:
+        // :return: Elements:
+        //  - textarea element replacing the p element
+        //  - Save button replacing the element button
         function editHandler() {
             const originalPrompt = originalP.textContent;
 
@@ -65,6 +76,11 @@ document.addEventListener("DOMContentLoaded", function() {
             newTextArea.dispatchEvent(new Event('input'));
         }
 
+        // Event Listener for save button
+        // :param:
+        // :return: Element:
+        //  - p element replacing textarea element
+        //  - incoming card based off new edited prompt
         async function saveHandler() {
             const newTextArea = container.querySelector('textarea');
             if (newTextArea) {
@@ -86,6 +102,10 @@ document.addEventListener("DOMContentLoaded", function() {
             }
         }
 
+        // Event Listener for cancel button
+        // :param:
+        // :return: Element:
+        //  - original p element and it's contents
         function cancelHandler() {
             const newTextArea = container.querySelector('textarea');
             if (newTextArea) {
@@ -96,6 +116,7 @@ document.addEventListener("DOMContentLoaded", function() {
             }
         }
 
+        // :return: Removes save and cancel handler, then finally adds the edit handler
         function resetHandlers() {
             button.removeEventListener('click', saveHandler);
             actionCancel.removeEventListener('click', cancelHandler);
@@ -106,6 +127,8 @@ document.addEventListener("DOMContentLoaded", function() {
     }
 
     // Adding Outgoing Card
+    // :param: String(prompt)
+    // :return: On screen, outgoing card
     async function addOutgoing(prompt) {
         if (prompt.trim()) {
             loadingWheel.style.display = 'flex';
@@ -131,6 +154,8 @@ document.addEventListener("DOMContentLoaded", function() {
     }
 
     // Adding Incoming Card
+    // :param: String(prompt)
+    // :return: On screen, outgoing card
     function addIncoming(prompt) {
         const li = document.createElement('li');
         const div = document.createElement('div');
@@ -177,12 +202,18 @@ document.addEventListener("DOMContentLoaded", function() {
         scrollToNewContainer(div);
     }
 
+
+    /*
+        Requests endpoint for LLM Response
+        :Param: String(prompt)
+        Response: String(response)
+    */
     async function getPromptResponse(prompt) {
         try {
-            const rsp = await fetch("/get-response", {
+            const rsp = await fetch("http://127.0.0.1:80/get-response", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ message: prompt })
+                body: JSON.stringify({ question: prompt })
             });
 
             if (rsp.status != 200) {
@@ -198,16 +229,18 @@ document.addEventListener("DOMContentLoaded", function() {
     }
 
     /*
-        -------------------------------------------
-        Functions for the user input container
-        -------------------------------------------
+    -------------------------------
+            User Input Container
+    -------------------------------
     */
+    // Key Press Listener
     textArea.addEventListener("keypress", function(e) {
         if (e.key === "Enter" && !e.shiftKey && textArea.value.trim()) {
             promptSubmit.click();
         }
     });
 
+    // Up Arrow Prompt Submit Listener
     promptSubmit.addEventListener("click", async function(e) {
         addIncoming(textArea.value);
         let userPrompt = textArea.value;

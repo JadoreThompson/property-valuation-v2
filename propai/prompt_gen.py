@@ -225,13 +225,12 @@ async def context_chain(question:str) -> dict:
 
 
 # Example Usage
-async def main():
-    question = "average price of a house in london"
+async def get_llm_response(question):
     context = await context_chain(question)
     response = await CHAIN.ainvoke({"context": context, "input": question})
-    print("Response: ", response)
+    return response
 
 
 import asyncio
 if __name__ == "__main__":
-    asyncio.run(main())
+    asyncio.run(get_llm_response(""))

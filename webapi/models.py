@@ -6,6 +6,20 @@ class HTTPResponse(BaseModel):
     status: int
 
 
+class User(BaseModel):
+    email: str
+    password: str
+
+
+class SignUpUser(User):
+    fname: str
+    sname: str
+
+
+class AuthResponse(HTTPResponse):
+    detail: str
+
+
 class ChatRequest(BaseModel):
     question: str
 

@@ -76,7 +76,8 @@ REMEMBER: Use the history to answer  the user's question.\
 If there is no relevant context, and you can't use the chat history to answer the user's question\
 simply reply with "Hmm, that one I'm not sure about". Only do this if you can't use the chat history\
 and the context data can't be used to answer the question. Your response should be no more than\
-250 words.  
+250 words. Your response still needs to be concise so do not talk more than you need to. Ensure your response\
+doesn't talk bad about our data source. Merge the data source and the provided search results together to perfect an answer.  
 
 Question: {input}\
 """
@@ -263,27 +264,20 @@ async def context_chain(question:str) -> dict:
 
 
 # Example Usage
-async def get_llm_response(): # question):
+async def get_llm_response(question):
     """
-        :param: question:
-        :return: LLM Response
+    :param: question:
+    :return: LLM Response
     """
-    while True:
-        question = input("You: ")
 
-        context = await context_chain(question)
-
-        # OG: response = await CHAIN.ainvoke({"context": context, "input": question})
-
-        response = await with_message_history.ainvoke(
-            {"context": context, "input": question, "history": STORE},
-            config={"configurable": {"session_id": "abc123"}}
-        )
-        print("Bot: ", response)
-
-    # OG: return response
+    context = await context_chain(question)
+    response = await with_message_history.ainvoke(
+        {"context": context, "input": question, "history": STORE},
+        config={"configurable": {"session_id": "abc123"}}
+    )
+    return response
 
 
 import asyncio
 if __name__ == "__main__":
-    asyncio.run(get_llm_response())
+    asyncio.run(get_llm_response(""))

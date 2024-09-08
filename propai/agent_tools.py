@@ -36,10 +36,6 @@ async def access_internet(tool_input: str) -> List[str]:
         async with session.get(SERP_ENDPOINT, params=params) as rsp:
             data = await rsp.json()
 
-            # print("-" * 20)
-            # print("Serp Data: ", json.dumps(data["related_questions"], indent=4))
-            # print("-" * 20)
-
             # Snippet is the key for the answer
             related_question_answers = [item["snippet"] for item in data["related_questions"]]
 

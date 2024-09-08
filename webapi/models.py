@@ -2,23 +2,25 @@ from pydantic import BaseModel, Field, field_validator, ValidationError
 from typing import Optional, List
 
 
+class HTTPResponse(BaseModel):
+    status: int
+
+
 class ChatRequest(BaseModel):
     question: str
 
 
-class ChatResponse(BaseModel):
-    status: int = 200
+class ChatResponse(HTTPResponse):
     response: str
 
 
 class ContactSales(BaseModel):
-    fname: Optional[str]
-    sname: Optional[str]
+    fname: Optional[str] = None
+    sname: Optional[str] = None
     email: str
-    phone: Optional[str]
-    company_link: Optional[str]
-    title: Optional[str]
-    # Greater than, Less than or equal to
+    phone: Optional[str] = None
+    company_link: Optional[str] = None
+    title: Optional[str] = None
     no_employees: Optional[int] = Field(default=None, ge=1, le=9999)
 
     @field_validator('no_employees')
@@ -31,3 +33,7 @@ class ContactSales(BaseModel):
 
     # TODO: Validate no special characters within the fields
     # TODO: Validate string length for specific fields
+
+
+class ContactSalesResponse(HTTPResponse):
+    response: str

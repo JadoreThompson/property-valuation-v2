@@ -58,11 +58,9 @@ document.addEventListener('DOMContentLoaded', function(){
 
                 const data = await rsp.json();
 
-                console.log(data);
-
-//                if (data.status != 200) {
-//                    throw new Error(data.message);
-//                }
+                if (data.status != 200) {
+                    throw new Error(data.message);
+                }
 
                 span.textContent = data.message;
                 span.style.display = 'flex';

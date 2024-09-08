@@ -38,13 +38,13 @@ async def get_response(chat_request: ChatRequest):
     try:
         question = chat_request.question
         rsp = await get_llm_response(question)
-        return ChatResponse(response=rsp)
+        return ChatResponse(status=200, response=rsp)
     except Exception as e:
         print(f"Get Response: {str(e)}")
         raise HTTPException(status_code=500, detail="Something went wrong, please try again")
 
 
-@app.post("/contact-sales")
+@app.post("/contact-sales", response_model=ContactSalesResponse)
 async def contact_sales(contact_sales_form: ContactSales):
     """
     :param contact_sales_form:

@@ -2,6 +2,7 @@ import os
 from dotenv import load_dotenv
 from urllib.parse import quote
 from datetime import datetime, timedelta
+from pprint import pprint, pformat
 
 # LangChain Modules
 from langchain_google_genai import ChatGoogleGenerativeAI
@@ -55,8 +56,10 @@ You should use bullet points in your answer for readability when necessary. When
 remember to put only one pound sign at the beginning of the number and commas for every thousand\
 as well as rounding to the nearest pound. 
 
-If there is nothing in the context relevant to the question at hand,\
-just respond with "Hmm, that one I'm not sure about".
+
+Below is the chat history, use the chat history to answer the user's question if needed
+
+{history}
 
 Anything between the following 'context' block is retrieved form a knowledge bank\
 and is not part of the conversation between the user.
@@ -65,17 +68,19 @@ and is not part of the conversation between the user.
     {context}
 <context/>
 
-Below is the chat history, use the chat history to answer the user's question if needed\
-{history}
+You must use the history to gain insight into what the user is trying to ask if he history is there.\
+If there is nothing in the context relevant to the question at hand, and the history doesn't help\
+to answer the user's question just respond with "Hmm, that one I'm not sure about".
 
 REMEMBER: Use the history to answer  the user's question.\
 If there is no relevant context, and you can't use the chat history to answer the user's question\
 simply reply with "Hmm, that one I'm not sure about". Only do this if you can't use the chat history\
-and the context data can't be used to answer the question. Your response should be no more thatn\
-250 words. 
+and the context data can't be used to answer the question. Your response should be no more than\
+250 words.  
 
 Question: {input}\
 """
+
 
 FEW_SHOT_PREFIX = """
 You are an agent designed to interact with a SQL database.\
@@ -84,10 +89,17 @@ then look at the results of the query and return the answer.
 
 Unless the user specifies a specific number of examples they wish to obtain, always limit your query\
 to at most {top_k} results.You can order the results by a relevant column to return the most interesting examples\
- in the database.Never query for all the columns from a specific table, only ask for the relevant columns given the question.
+ in the database.Never query for all the columns from a specific table, only ask for the relevant columns given the question.\
 You have access to tools for interacting with the database.
 
-Only use the given tools. Only use the information returned by the tools to construct your final answer.
+Below is the current history of messages. If the history is there, use the history of messages to get context as to what\
+the SQL query should look like. Only generate a query if you can get the necessary pieces of information relating  to the\
+table structure.
+
+History: 
+{history}
+
+Only use the given tools. Only use the information returned by the tools to construct your final answer.\
 You MUST double check your query before executing it. If you get an error while executing a query, rewrite the query\
 and try again.
 
@@ -98,7 +110,7 @@ If you try to query a particular district and it doesn't work. use the LIKE abil
 SELECT price_paid FROM property_data WHERE district LIKE '%KENSINGTON%';
 
 When the output is relating to prices or prices are being spoken about ensure that you use proper formatting.\
-That means putting only one pound sign before the number.
+That means putting only one pound sign before the number.\
 """
 
 
@@ -186,7 +198,7 @@ few_shot_prompt = FewShotPromptTemplate(
     example_prompt=PromptTemplate.from_template(
         "User Input: {input}\nSQL Query:{query}\n\n"    # Using the keys from the few shot examples to create the prompt
     ),
-    input_variables=["input", "dialect", "top_k"],
+    input_variables=["input", "dialect", "top_k", "history"],
     prefix=FEW_SHOT_PREFIX,
     suffix="",
 )
@@ -202,7 +214,6 @@ SQL_AGENT = create_sql_agent(llm=LLM, db=DB, verbose=True, agent_type="tool-call
 # Defining Chain
 llm_prompt = ChatPromptTemplate.from_template(RESPONSE_TEMPLATE)
 
-# TODO: Make access internet and SQL Agent run in parallel
 CHAIN = (
     # {"context": access_internet, "input": RunnablePassthrough()}
     # ^ Invocation
@@ -238,7 +249,8 @@ async def context_chain(question:str) -> dict:
 
     # Task for getting SQL Agent and Access to input
     access_internet_task = asyncio.create_task(access_internet(question))
-    sql_agent_task = asyncio.create_task(SQL_AGENT.ainvoke({"input": question}))
+    sql_agent_task = asyncio.create_task(SQL_AGENT.ainvoke({"input": question, "history": STORE}))
+    # OG: sql_agent_task = asyncio.create_task(SQL_AGENT.ainvoke({"input": question}))
 
     access_internet_result, sql_agent_result = await asyncio.gather(
         access_internet_task, sql_agent_task
@@ -257,10 +269,6 @@ async def get_llm_response(): # question):
         :return: LLM Response
     """
     while True:
-        print("*" * 20)
-        print("Current History: ", STORE)
-        print("*" * 20)
-
         question = input("You: ")
 
         context = await context_chain(question)
@@ -268,7 +276,7 @@ async def get_llm_response(): # question):
         # OG: response = await CHAIN.ainvoke({"context": context, "input": question})
 
         response = await with_message_history.ainvoke(
-            {"context": context, "input": question},
+            {"context": context, "input": question, "history": STORE},
             config={"configurable": {"session_id": "abc123"}}
         )
         print("Bot: ", response)

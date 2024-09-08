@@ -9,6 +9,10 @@ from langchain_core.prompts import ChatPromptTemplate, FewShotPromptTemplate, Pr
     SystemMessagePromptTemplate, MessagesPlaceholder
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.runnables import RunnablePassthrough
+from langchain_community.chat_message_histories import ChatMessageHistory
+from langchain_core.chat_history import BaseChatMessageHistory
+from langchain_core.runnables.history import RunnableWithMessageHistory
+
 from langchain_community.utilities import SQLDatabase
 from langchain_community.agent_toolkits import create_sql_agent
 from langchain_core.example_selectors import SemanticSimilarityExampleSelector
@@ -38,7 +42,6 @@ DB = SQLDatabase.from_uri(
 # Defining LLM
 LLM = ChatGoogleGenerativeAI(model="gemini-1.5-flash", temperature=0.0)
 
-
 # Templates
 RESPONSE_TEMPLATE = """\
 You are an expert analyst in the real estate industry tasked with answering\
@@ -62,9 +65,16 @@ and is not part of the conversation between the user.
     {context}
 <context/>
 
-REMEMBER: If there is no relevant context, simply reply with "Hmm, that one I'm not sure about".
+Below is the chat history, use the chat history to answer the user's question if needed\
+{history}
 
-Question: {input}
+REMEMBER: Use the history to answer  the user's question.\
+If there is no relevant context, and you can't use the chat history to answer the user's question\
+simply reply with "Hmm, that one I'm not sure about". Only do this if you can't use the chat history\
+and the context data can't be used to answer the question. Your response should be no more thatn\
+250 words. 
+
+Question: {input}\
 """
 
 FEW_SHOT_PREFIX = """
@@ -90,6 +100,7 @@ SELECT price_paid FROM property_data WHERE district LIKE '%KENSINGTON%';
 When the output is relating to prices or prices are being spoken about ensure that you use proper formatting.\
 That means putting only one pound sign before the number.
 """
+
 
 # Few Shot Examples
 # TODO: Add more examples with wider range (may improve consistency)
@@ -201,14 +212,29 @@ CHAIN = (
 )
 
 
+def get_session_history(session_id: str) -> BaseChatMessageHistory:
+    if session_id not in STORE:
+        STORE[session_id] = ChatMessageHistory()
+    return STORE[session_id]
+
+
+STORE = {}
+with_message_history = RunnableWithMessageHistory(
+    CHAIN,
+    get_session_history,
+    input_messages_key="input",
+    history_messages_key="history",
+)
+
+
 async def context_chain(question:str) -> dict:
-    '''
+    """
     :param question:
     :return:
         - dict:
             - internet_results: List[str]
             - sql_result: str
-    '''
+    """
 
     # Task for getting SQL Agent and Access to input
     access_internet_task = asyncio.create_task(access_internet(question))
@@ -225,12 +251,31 @@ async def context_chain(question:str) -> dict:
 
 
 # Example Usage
-async def get_llm_response(question):
-    context = await context_chain(question)
-    response = await CHAIN.ainvoke({"context": context, "input": question})
-    return response
+async def get_llm_response(): # question):
+    """
+        :param: question:
+        :return: LLM Response
+    """
+    while True:
+        print("*" * 20)
+        print("Current History: ", STORE)
+        print("*" * 20)
+
+        question = input("You: ")
+
+        context = await context_chain(question)
+
+        # OG: response = await CHAIN.ainvoke({"context": context, "input": question})
+
+        response = await with_message_history.ainvoke(
+            {"context": context, "input": question},
+            config={"configurable": {"session_id": "abc123"}}
+        )
+        print("Bot: ", response)
+
+    # OG: return response
 
 
 import asyncio
 if __name__ == "__main__":
-    asyncio.run(get_llm_response(""))
+    asyncio.run(get_llm_response())

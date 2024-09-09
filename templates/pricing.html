@@ -5,7 +5,30 @@
 {% block content %}
 <style>
 
+    /* Call to action styling */
+    .cta-container {
+        text-align: center;
+    }
+
+    .cta-container span {
+        color: #5a625b;
+    }
+
     /* Pricing Card Related */
+     .card:hover {
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+     }
+
+    .promo-card {
+        box-shadow: 0 1px 2px rgba(217, 153, 79, 0.55);
+        border: 1px solid rgba(217, 153, 79, 0..1);
+    }
+
+    .promo-card:hover {
+        border: 1px solid rgba(217, 153, 79, 0.55);
+        box-shadow: 0 6px 12px rgba(217, 153, 79, 0.55);
+    }
+
     .pricing-container {
         display: flex;
         justify-content: center;
@@ -31,11 +54,18 @@
     }
 </style>
 
-<section style="max-width: 100vw; height: 100vh; display: flex; justify-content: center; align-items: center;">
-    <div class="container pricing-container row">
+<!--<section class="mb-5" style="display: flex; justify-content: center; align-items: center; height: 60vh;">-->
+<!--    <h1>Choose the plan that fits your needs</h1>-->
+<!--</section>-->
 
-        <!--Below are the pricing containers-->
+<!--Pricing Cards-->
+<section style="max-width: 100vw; height: 100vh; display: flex; flex-direction: column; justify-content: center; align-items: center;">
+    <div class="cta-container" style="margin-bottom: 7rem;">
+        <h1 style="margin-bottom: 1rem;">Choose the plan that fits your needs</h1>
+        <span>Unlock the power of AI and automate your workflow</span>
+    </div>
 
+    <div class="container pricing-container row" style="top: 0;">
         <div class="col-12 col-md-4 mb-3">
             <div class="card">
                 <div class="card-title pricing-card-title">
@@ -58,7 +88,7 @@
         </div>
 
         <div class="col-12 col-md-4 mb-3">
-            <div class="card" style="border: 1px solid black;">
+            <div class="card promo-card">
                 <div class="card-title pricing-card-title">
                     <h2>Free</h2>
                 </div>

@@ -32,12 +32,12 @@ class ChatResponse(HTTPResponse):
 
 
 class ContactSales(BaseModel):
-    fname: Optional[str] = None
-    sname: Optional[str] = None
-    email: str
-    phone: Optional[str] = None
+    fname: Optional[str] = Field(default=None, min_length=2, max_length=20)
+    sname: Optional[str] = Field(default=None, min_length=2, max_length=20)
+    email: str = Field(min_length=5, max_length=100)
+    phone: Optional[str] = Field(default=None, min_length=11, max_length=11)
     company_link: Optional[str] = None
-    title: Optional[str] = None
+    title: Optional[str] = Field(default=None, min_length=2)
     no_employees: Optional[int] = Field(default=None, ge=1, le=9999)
 
     @field_validator("fname", "sname")
@@ -45,8 +45,6 @@ class ContactSales(BaseModel):
         if value and not re.match(r"^[a-zA-Z0-9]+$", value):
                 raise ValueError("Can't have special characters")
         return value
-
-# TODO: Validate string length for specific fields
 
 
 class ContactSalesResponse(HTTPResponse):

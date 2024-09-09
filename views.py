@@ -1,9 +1,11 @@
-from flask import Blueprint, jsonify, request, render_template, redirect, url_for
 import json
 
+# Flask Modules
+from flask import Blueprint, jsonify, request, render_template, redirect, url_for
+
+# Directory Modules
 from forms import ContactSalesForm
 from db_connection import get_db_conn
-from propai import prompt_gen
 
 
 views = Blueprint("views", __name__)
@@ -11,19 +13,19 @@ views = Blueprint("views", __name__)
 
 @views.route("/")
 def index():
-    '''
-        :return: Landing Page
-    '''
+    """
+    :return: Landing Page
+    """
     form = ContactSalesForm()
     return render_template("index.html", form=form)
 
 
 @views.route("/contact-sales", methods=["POST"])
 def contact_sales():
-    '''
-        :body: {ContactSalesForm}
-        :return:
-    '''
+    """
+    :body: {ContactSalesForm}
+    :return:
+    """
 
     try:
         body = request.get_json()
@@ -60,8 +62,12 @@ def contact_sales():
 
 @views.route("/dashboard")
 def dashboard():
-    '''
-        :return: dashboard page
-    '''
+    """
+    :return: dashboard page
+    """
     return render_template("dashboard.html")
 
+
+@views.route("/pricing")
+def pricing():
+    return render_template("pricing.html")

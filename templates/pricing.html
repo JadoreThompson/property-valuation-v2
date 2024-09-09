@@ -1,0 +1,100 @@
+{% extends "base.html" %}
+
+{% block title %}Pricing{% endblock %}
+
+{% block content %}
+<style>
+
+    /* Pricing Card Related */
+    .pricing-container {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        width: 100vw;
+    }
+
+    .pricing-card-title {
+        /*text-align: center;*/
+        padding: 1rem;
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+    }
+
+    .price {
+        font-size: 2rem;
+    }
+
+    .pricing-period {
+        color: #5a625b;
+        margin-top: auto;
+    }
+</style>
+
+<section style="max-width: 100vw; height: 100vh; display: flex; justify-content: center; align-items: center;">
+    <div class="container pricing-container row">
+
+        <!--Below are the pricing containers-->
+
+        <div class="col-12 col-md-4 mb-3">
+            <div class="card">
+                <div class="card-title pricing-card-title">
+                    <div class="pricing-card-title-inner">
+                        <span class="price">£15</span>
+                        <span class="pricing-period">per month</span>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <ul>
+                        <li><p>Unlimited Projects</p></li>
+                        <li><p>Share with team members</p></li>
+                        <li><p>20GB Storage</p></li>
+                    </ul>
+                </div>
+                <div class="card-footer">
+                    <button class="btn">Join Now</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-12 col-md-4 mb-3">
+            <div class="card" style="border: 1px solid black;">
+                <div class="card-title pricing-card-title">
+                    <h2>Free</h2>
+                </div>
+                <div class="card-body">
+                    <ul>
+                        <li><p>Unlimited Projects</p></li>
+                        <li><p>Share with team members</p></li>
+                        <li><p>20GB Storage</p></li>
+                    </ul>
+                </div>
+                <div class="card-footer">
+                    <button class="btn">Try For Free</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-12 col-md-4 mb-3">
+            <div class="card">
+                <div class="card-title pricing-card-title">
+                    <div class="pricing-card-title-inner">
+                        <span class="price">£50</span>
+                        <span class="pricing-period">per month</span>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <ul>
+                        <li><p>Unlimited Projects</p></li>
+                        <li><p>Share with team members</p></li>
+                        <li><p>20GB Storage</p></li>
+                    </ul>
+                </div>
+                <div class="card-footer">
+                    <button class="btn">Join Now</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}

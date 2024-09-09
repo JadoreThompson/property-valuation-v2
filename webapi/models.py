@@ -1,5 +1,8 @@
-from pydantic import BaseModel, Field, field_validator, ValidationError
-from typing import Optional, List
+import re
+
+# Pydantic and Fast API related
+from pydantic import BaseModel, Field, field_validator, ValidationError, model_validator
+from typing import Optional, List, Any
 
 
 class HTTPResponse(BaseModel):
@@ -37,16 +40,13 @@ class ContactSales(BaseModel):
     title: Optional[str] = None
     no_employees: Optional[int] = Field(default=None, ge=1, le=9999)
 
-    @field_validator('no_employees')
-    @classmethod
-    def ensure_num_not_zero(cls, no_employees:int) -> int:
-        if no_employees:
-            if no_employees == 0:
-                raise ValidationError("Number of employees cannot be 0")
-        return no_employees
+    @field_validator("fname", "sname")
+    def check_special_characters(cls, value):
+        if value and not re.match(r"^[a-zA-Z0-9]+$", value):
+                raise ValueError("Can't have special characters")
+        return value
 
-    # TODO: Validate no special characters within the fields
-    # TODO: Validate string length for specific fields
+# TODO: Validate string length for specific fields
 
 
 class ContactSalesResponse(HTTPResponse):

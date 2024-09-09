@@ -8,6 +8,7 @@ import psycopg2
 import uvicorn
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from pydantic import ValidationError
 
 # Directory Modules
 from webapi.models import (
@@ -156,6 +157,12 @@ async def contact_sales(contact_sales_form: ContactSales):
         - 500, internal server error
     """
 
+    try:
+        assert contact_sales_form
+    except ValidationError as e:
+        print(e)
+        raise HTTPException(status_code=429, detail=str(e))
+
     contact_sales_form_dict = dict(contact_sales_form)
     columns = [key for key in contact_sales_form_dict if contact_sales_form_dict[key] != None]
     insert_values = [(contact_sales_form_dict[key], ) for key in contact_sales_form_dict]
@@ -178,11 +185,11 @@ async def contact_sales(contact_sales_form: ContactSales):
                     raise HTTPException(status_code=409, detail="User with email already exists")
 
                 # Adding to Contact Sales Table
-                cur.execute(f"""\
+                cur.execute(f"""
                         INSERT INTO contact_sales({", ".join(columns)})\
                         VALUES ({placeholders})\
                         RETURNING id;\
-                """, (insert_values, ))
+                """, insert_values)
                 conn.commit()
 
                 user_id = cur.fetchone()

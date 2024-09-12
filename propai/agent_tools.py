@@ -43,4 +43,4 @@ async def access_internet(tool_input: str) -> List[str]:
 
 
 if __name__ == "__main__":
-    asyncio.run(access_internet("average price of 3 bed detached house with 2 bedrooms in london"))
+    asyncio.run(access_internet("average price of house with in london"))

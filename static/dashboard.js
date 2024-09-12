@@ -2,6 +2,7 @@ document.addEventListener("DOMContentLoaded", function() {
     const textArea = document.getElementById("user-textarea");
     const promptSubmit = document.getElementById("prompt-submit");
     const loadingWheel = document.getElementById("loading-wheel");
+    const msgContainer = document.querySelector("main .all-messages-container");
 
     /*
     -------------------------------------------------------------
@@ -29,8 +30,9 @@ document.addEventListener("DOMContentLoaded", function() {
     Functions relating to the incoming and outgoing cards
     ----------------------------------------------------------
     */
-    function scrollToNewContainer(container) {
-        container.scrollIntoView({behavior: 'smooth', block: 'end'});
+    function scrollToNewContainer() {
+        //msgContainer.scrollIntoView({behavior: 'smooth', block: 'end'});
+        msgContainer.scrollTop = msgContainer.scrollHeight;
     }
 
     // Making card editable
@@ -149,7 +151,7 @@ document.addEventListener("DOMContentLoaded", function() {
 
             ul.appendChild(li);
 
-            scrollToNewContainer(div);
+            scrollToNewContainer();
         }
     }
 
@@ -199,7 +201,8 @@ document.addEventListener("DOMContentLoaded", function() {
         const ul = document.querySelector('.all-messages-container ul');
         ul.appendChild(li);
         makeEditable(actionEdit);
-        scrollToNewContainer(div);
+
+        scrollToNewContainer();
     }
 
 

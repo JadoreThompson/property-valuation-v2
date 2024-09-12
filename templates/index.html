@@ -4,6 +4,11 @@
 
 {% block content %}
 <style>
+    .card-title {
+        padding: 1rem;
+        border-bottom: 1px solid #CCCCCC;
+    }
+
     .header-buttons {
         display: flex;
         align-items: center;
@@ -28,7 +33,6 @@
         width: 100%;
         max-width: 100%;
     }
-
 
     .landing-section {
         min-height: 70vh;
@@ -156,6 +160,31 @@
         }
     }
 
+    .product-description-card {
+        height: 22rem;
+        border: 1px solid rgba(0,0,0,0);
+    }
+
+    .card-footer {
+        border-top: 1px solid rgba(0,0,0,0);
+        background-color: rgba(0,0,0,0);
+    }
+
+    .product-description-card .card-footer .btn {
+        border: 1px solid rgba(217, 153, 79, 0.55);
+        box-shadow: 0 1px 2px 0 rgba(217, 153, 79, 0.55);
+    }
+
+    @media(max-width: 460px){
+        .product-description-card{
+            height: 25rem;
+        }
+    }
+
+    .product-description-card .card-body p {
+        font-weight: 300;
+    }
+
     .demo-container {
         display: flex;
         justify-content: center;
@@ -165,6 +194,13 @@
     .demo-container video{
         width: 50%;
         border-radius: 0.5rem;
+    }
+
+    @media(max-width:460px){
+        .demo-container,
+        .demo-container video{
+            width: 100%;
+        }
     }
 
     @media (min-width: 600px) {
@@ -210,9 +246,7 @@
 <section class="landing-section">
     <nav class="" style="background-color: transparent;">
         <div class="header-buttons p-3">
-<!--            <a href="/login" class="btn" style="color: white;">Login</a>-->
             <button id="contact-sales-btn" class="btn btn-quaternary">Contact Sales</button>
-            <button class="btn"></button>
         </div>
     </nav>
     <div class="container landing-container page-container">
@@ -234,22 +268,72 @@
 </section>
 
 <!--Product Section-->
-<section class="mt-5">
-    <div class="container page-container">
-        <div class="jumbotron landing-jumbotron" style="color: black;">
-            <h1>Product</h1>
+<!--<section style="margin-top: 20rem;">-->
+<!--    <div class="container page-container">-->
+<!--        <div class="jumbotron landing-jumbotron" style="color: black;">-->
+<!--            <h1>Product</h1>-->
+<!--        </div>-->
+<!--        <div class="span-container">-->
+<!--            <span>Automate your property research for residential markets</span>-->
+<!--        </div>-->
+<!--    </div>-->
+<!--</section>-->
+
+<section class="carousel">
+    <div class="container">
+
+    </div>
+</section>
+
+<!--Product Description Cards-->
+<section style="margin-top: 5rem;">
+    <div class="container">
+        <div class="row">
+            <div class="col-12 col-md-4">
+                <div class="card product-description-card mb-3">
+                    <div class="card-title" style="">
+                        <h4>Accelerate Comparative Market Analysis (CMA)</h4>
+                    </div>
+                    <div class="card-body">
+                        <p>Save hours on research with our AI-driven property analysis tool. Instantly generate accurate Comparative Market Analyses by leveraging real-time data and advanced learning models, tailored to your needs. Stay ahead with smart insights that help you make informed decisions faster</p>
+                    </div>
+                    <div class="card-footer">
+                        <button class="btn">Join Now</button>
+                    </div>
+                </div>
+            </div>
+            <div class="col-12 col-md-4">
+                <div class="card product-description-card mb-3">
+                    <div class="card-title">
+                        <h4>Automate In-Depth Property Research</h4>
+                    </div>
+                    <div class="card-body">
+                        <p>Streamline your research process with our powerful LLM. Whether it's local market trends, neighbourhood data or property history, our AI provides detailed, actionable insights in seconds. Focus on strategy while we handle the heavy lifting for you</p>
+                    </div>
+                    <div class="card-footer">
+                        <button class="btn">Join Now</button>
+                    </div>
+                </div>
+            </div>
+            <div class="col-12 col-md-4">
+                <div class="card product-description-card mb-3">
+                    <div class="card-title">
+                        <h4>Boost Efficiency and Close Deals Faster</h4>
+                    </div>
+                    <div class="card-body">
+                        <p>Unlock new levels of efficiency by automating your property evaluations and research tasks. Our application helps you cut through the noise and access the exact data you need, freeing up time to focus on clients and closing deals with confidence</p>
+                    </div>
+                    <div class="card-footer">
+                        <button class="btn">Join Now</button>
+                    </div>
+                </div>
+            </div>
         </div>
-        <div class="span-container">
-            <span>Automate your property research for residential markets</span>
-        </div>
-        <style>
-            @media(max-width:460px){
-                .demo-container,
-                 .demo-container video{
-                    width: 100%;
-                }
-            }
-        </style>
+    </div>
+</section>
+
+<section>
+    <div class="container page-container"></div>
         <div class="container demo-container mt-5">
             <video controls>
                 <source src="{{ url_for('static', filename='videos/Fortnite   2024-03-15 18-59-25.mp4') }}" type="video/mp4">
@@ -352,7 +436,7 @@
       <ul class="nav flex-column">
         <li class="nav-item mb-2"><a href="/" class="nav-link p-0 text-body-secondary">Home</a></li>
 <!--        <li class="nav-item mb-2"><a href="/pricing" class="nav-link p-0 text-body-secondary">Features</a></li>-->
-        <li class="nav-item mb-2"><a href="#" class="nav-link p-0 text-body-secondary">Pricing</a></li>
+        <li class="nav-item mb-2"><a href="/pricing" class="nav-link p-0 text-body-secondary">Pricing</a></li>
 <!--        <li class="nav-item mb-2"><a href="#" class="nav-link p-0 text-body-secondary">FAQs</a></li>-->
         <li class="nav-item mb-2"><a href="#" class="nav-link p-0 text-body-secondary">About</a></li>
       </ul>

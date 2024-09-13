@@ -10,9 +10,9 @@ import re
 from thefuzz import fuzz
 from multiprocessing import Pool
 
-from app_scraping import ROOT_DIR
+# Directory Modules
 from scripts import cleaning
-from propai import fetcher, proximities
+from Valora import fetcher, proximities
 
 
 bank_rate, mortgage_rate, regional_employment, inflation_rate, \
@@ -320,12 +320,14 @@ async def run2(row):
             row = await scrape_postcode(page, row, browser)
 
             new_df = pd.DataFrame([row])
-            # fetcher.upload_to_bucket(new_df)
-            print("Saving to CSV...")
-            new_df.to_csv(os.path.join(ROOT_DIR, "data", "internal", "rightmove{0}.csv".format(datetime.now().strftime("%Y-%m-%d 5H_%M_%S_%f"))), index=False)
-            print("Saved to CSV...")
+            fetcher.insert_to_db(new_df)
+
+            # print("Saving to CSV...")
+            # new_df.to_csv(os.path.join(ROOT_DIR, "data", "scraped", "rightmove{0}.csv".format(datetime.now().strftime("%Y-%m-%d 5H_%M_%S_%f"))), index=False)
+            # print("Saved to CSV...")
+
             end_time = time.time()
-            print(f"Duration: {end_time - start_time} seconds")
+            print(f"Total Duration: {end_time - start_time} seconds")
     except Exception as e:
         print(f"Error in run2: {e}")
     finally:

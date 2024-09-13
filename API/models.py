@@ -41,7 +41,7 @@ class ContactSales(BaseModel):
     no_employees: Optional[int] = Field(default=None, ge=1, le=9999)
 
     @field_validator("fname", "sname")
-    def check_special_characters(cls, value):
+    def check_special_characters(cls, value: str) -> str:
         if value and not re.match(r"^[a-zA-Z0-9]+$", value):
                 raise ValueError("Can't have special characters")
         return value

@@ -21,7 +21,7 @@ from langchain_google_genai import GoogleGenerativeAIEmbeddings
 from langchain_community.vectorstores import FAISS
 
 # Directory modules
-from propai.agent_tools import access_internet
+from Valora.agent_tools import RightMoveSearchTool, ZooplaSearchTool
 
 
 load_dotenv("../.env")
@@ -42,6 +42,7 @@ DB = SQLDatabase.from_uri(
 
 # Defining LLM
 LLM = ChatGoogleGenerativeAI(model="gemini-1.5-flash", temperature=0.0)
+LLM = LLM.bind_tools([RightMoveSearchTool, ZooplaSearchTool])
 
 # Templates
 RESPONSE_TEMPLATE = """\
@@ -96,6 +97,9 @@ Unless the user specifies a specific number of examples they wish to obtain, alw
 to at most {top_k} results.You can order the results by a relevant column to return the most interesting examples\
  in the database.Never query for all the columns from a specific table, only ask for the relevant columns given the question.\
 You have access to tools for interacting with the database.
+
+When searching for features like garden, check in the extra_features column for the attribute, something like
+SELECT COUNT(*) FROM property_data WHERE extra_features LIKE '%garden%'. 
 
 Below is the current history of messages. If the history is there, use the history of messages to get context as to what\
 the SQL query should look like. Only generate a query if you can get the necessary pieces of information relating  to the\
@@ -255,7 +259,6 @@ async def context_chain(question:str) -> dict:
     # Task for getting SQL Agent and Access to input
     access_internet_task = asyncio.create_task(access_internet(question))
     sql_agent_task = asyncio.create_task(SQL_AGENT.ainvoke({"input": question, "history": STORE}))
-    # OG: sql_agent_task = asyncio.create_task(SQL_AGENT.ainvoke({"input": question}))
 
     access_internet_result, sql_agent_result = await asyncio.gather(
         access_internet_task, sql_agent_task
@@ -273,15 +276,15 @@ async def get_llm_response(question):
     :param: question:
     :return: LLM Response
     """
-
     context = await context_chain(question)
     response = await with_message_history.ainvoke(
         {"context": context, "input": question, "history": STORE},
         config={"configurable": {"session_id": "abc123"}}
     )
+    print("bot: ", response)
     return response
 
 
 import asyncio
 if __name__ == "__main__":
-    asyncio.run(get_llm_response(""))
+    asyncio.run(get_llm_response("whats the average price of a house in enfield"))

@@ -5,7 +5,7 @@ from psycopg2 import pool
 from contextlib import contextmanager
 
 
-load_dotenv("./.env")
+load_dotenv("../.env")
 
 conn_params = {
     'host': os.getenv('DB_HOST'),

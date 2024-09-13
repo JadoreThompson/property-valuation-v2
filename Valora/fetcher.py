@@ -1,31 +1,30 @@
 import asyncio
-import os
-from datetime import datetime
-import pandas as pd
 import random
+from datetime import datetime
+from thefuzz import fuzz
+from urllib.parse import urlencode
+import re
+import json
+from bs4 import BeautifulSoup
+
+import os
+from dotenv import load_dotenv
+
+import pandas
+import pandas as pd
 
 import googlemaps
 from google.cloud import storage
 from google.cloud.storage import transfer_manager
 
-from thefuzz import fuzz
-from dotenv import load_dotenv
+#Directory Modules
+from db_connection import get_db_conn
 
-import re
-import aiohttp
-from urllib.parse import urlencode
-import json
-from bs4 import BeautifulSoup
-from playwright.async_api import async_playwright
-
-# from app import ROOT_DIR
-from dojo import ROOT_DIR
-
-
-load_dotenv(os.path.join(ROOT_DIR, ".env"))
+load_dotenv("../.env")
 
 # Google
-os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = os.path.join(ROOT_DIR, "prop-llm-80aaec11f50b.json")
+GOOGLE_CREDS = "../prop-llm-80aaec11f50b.json"
+os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = GOOGLE_CREDS
 
 ONS_TOKEN = os.getenv("ONS_TOKEN")
 ONS_HEADER = {
@@ -33,9 +32,8 @@ ONS_HEADER = {
     'Authorization': f'Basic {ONS_TOKEN}'
 }
 
-storage_client = storage.Client.from_service_account_json(os.path.join(ROOT_DIR, "prop-llm-80aaec11f50b.json"))
+storage_client = storage.Client.from_service_account_json(GOOGLE_CREDS)
 bucket = storage_client.bucket(bucket_name=os.getenv("BUCKET_NAME"))
-
 
 user_agents = [
     # Android User Agents
@@ -217,8 +215,8 @@ async def get_crime_rate(postcode, session):
 
         try:
             total_rate = \
-            json_data['props']['initialReduxState']['report']['sectionResponses']['crime']['data']['crimeLsoa'][
-                'totalRate']
+                json_data['props']['initialReduxState']['report']['sectionResponses']['crime']['data']['crimeLsoa'][
+                    'totalRate']
             return float(total_rate)
         except KeyError:
             return pd.NA
@@ -307,11 +305,11 @@ def upload_to_bucket(df):
         blob.upload_from_string(df.to_csv(index=False), "text/csv")
         print("Successfully sent to bucket...")
     except Exception as e:
-        print("Upload to Bucket, ",e)
+        print("Upload to Bucket, ", e)
         pass
 
 
-def download_from_bucket(destination_directory=os.path.join(ROOT_DIR, "data", "internal"), max_results=1000, workers=10):
+def download_from_bucket(destination_directory="../data/scraped", max_results=1000, workers=10):
     blob_names = [blob.name for blob in bucket.list_blobs()]
     results = transfer_manager.download_many_to_path(
         bucket, blob_names, destination_directory=destination_directory, max_workers=workers
@@ -327,8 +325,36 @@ def download_from_bucket(destination_directory=os.path.join(ROOT_DIR, "data", "i
             print("Downloaded {} to {}.".format(name, destination_directory + name))
 
 
+def insert_to_db(df: pandas.DataFrame):
+    """
+    :param df:
+    :return: Inserts scraped item to property_data table
+    """
+
+    with get_db_conn() as conn:
+        with conn.cursor() as cur:
+            try:
+                cur.execute("""\
+                SELECT 1\
+                FROM property_data\
+                WHERE full_address = %s AND sold_date = %s;
+               """, (df["full_address"][0], df["sold_date"][0],))
+                if cur.fetchone():
+                    print("Insert to DB: This item already exists")
+                    return
+
+                # Inserting to table when doesn't already exist
+                cur.execute(f"""\
+                    INSERT INTO property_data({df.columns})
+                    VALUES ({len([col for col in df.columns])})
+                    ON CONFLICT DO NOTHING;
+               """)
+                conn.commit()
+                print("Insert to DB: Successfully inserted item to DB")
+            except Exception as e:
+                conn.rollback()
+                print(f"Insert to DB: {type(e).__name__} - {str(e)}")
+
+
 if __name__ == "__main__":
-    print("Running Fetcher...")
-    # print(len(os.listdir(os.path.join(ROOT_DIR, "data", "internal"))))
-    for file in os.listdir(os.path.join(ROOT_DIR, "data", "internal")):
-        print(file)
+    pass

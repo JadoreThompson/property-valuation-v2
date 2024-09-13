@@ -1,18 +1,15 @@
+import os
 import string
 import time
+import numpy as np
 
 import pandas as pd
-# from app import ROOT_DIR
-from dojo import ROOT_DIR
-import os
-
-import numpy as np
 from tqdm import tqdm
+
+
 tqdm.pandas()
-
 pd.set_option("display.max_columns", None)
-
-EXTERNAL_DIR = os.path.join(ROOT_DIR, "data", "external")
+EXTERNAL_DIR = "../data/external"
 
 
 def clean_bank_rate():
@@ -20,15 +17,14 @@ def clean_bank_rate():
         :return: pandas_dataframe(Bank of England bank rate)
     '''
 
-    df = pd.read_csv(os.path.join(EXTERNAL_DIR, "bank_rate.csv"))
+    df = pd.read_csv(f"{EXTERNAL_DIR}/bank_rate.csv")
     df.columns = df.columns.str.lower()
     df = df.drop_duplicates()
     return df
 
 
 def clean_mortgage_rates():
-    df = pd.read_csv(os.path.join(EXTERNAL_DIR, "mortgage_rates.csv"))
-
+    df = pd.read_csv(f"{EXTERNAL_DIR}/mortgage_rates.csv")
     df = df.rename(columns={
         "Monthly interest rate of UK monetary financial institutions (excl. Central Bank) sterling 2 year (95% LTV) fixed rate mortgage to households (in percent) not seasonally adjusted              [a] [b] [c]             IUM2WTL": "2 year 95% LTV",
         "Monthly interest rate of UK monetary financial institutions (excl. Central Bank) sterling 2 year (90% LTV) fixed rate mortgage to households (in percent) not seasonally adjusted              [d] [e] [b] [c]             IUMB482": "2 year 90% LTV",
@@ -53,11 +49,11 @@ def clean_mortgage_rates():
 
 
 def clean_regional_employment():
-    '''
-        :return: Regional Employment Rate UK
-    '''
+    """
+    :return: Regional Employment UK Dataframe
+    """
 
-    df = pd.read_csv(os.path.join(EXTERNAL_DIR, "regional_employment_rate.csv"))
+    df = pd.read_csv(f"{EXTERNAL_DIR}/regional_employment_rate.csv")
 
     df = df.dropna()
 
@@ -84,7 +80,7 @@ def clean_inflation_rate():
         return cols
 
     def clean_inflation_csv(file, year, cpi_col, ind):
-        df = pd.read_csv(os.path.join(EXTERNAL_DIR, file), skiprows=3)
+        df = pd.read_csv(f"{EXTERNAL_DIR}/{file}", skiprows=3)
         df.columns = columns(df)
         for index, row in df.iterrows():
             if index < ind:
@@ -125,9 +121,9 @@ def clean_inflation_rate():
 
 
 def clean_regional_gdp():
-    '''
-        :return: pandas dataframe
-    '''
+    """
+    :return: Regional GDP Dataframe
+    """
 
     df = pd.read_excel(
         io=os.path.join(EXTERNAL_DIR, "regional_gdp.xlsx"), sheet_name=3, engine="openpyxl", skiprows=1)
@@ -183,9 +179,9 @@ def clean_lr_data():
 
 
 def run_clean():
-    '''
-        :return: all dataframes
-    '''
+    """
+    :return: All Dataframes
+    """
     bank_rate = clean_bank_rate()
     mortgage_rate = clean_mortgage_rates()
     regional_employment = clean_regional_employment()
@@ -232,10 +228,13 @@ def clean_internal_data(df):
 
 
 def begin_clean_internal_data():
+    """
+    :return: Cleaned Scraped Dataframes ready for DB insertion
+    """
     all_dfs = []
     error_count = 0
 
-    internal_path = os.path.join(ROOT_DIR, "data", "internal")
+    internal_path = "../data/internal/"
 
     for file in os.listdir(internal_path):
         df = pd.read_csv(os.path.join(internal_path, file))
@@ -249,7 +248,7 @@ def begin_clean_internal_data():
 
     if all_dfs:
         new_df = pd.concat(all_dfs, ignore_index=True)
-        new_df.to_csv("internal_data.csv", index=False)
+        new_df.to_csv("../data/internal/internal_data.csv", index=False)
 
 
 if __name__ == "__main__":

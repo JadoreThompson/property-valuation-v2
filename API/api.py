@@ -1,17 +1,18 @@
 import json
-
+from typing import List, Tuple, Any
 import argon2.exceptions
 from argon2 import PasswordHasher
 
 # FastAPI Modules
 import psycopg2
 import uvicorn
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException,Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 from pydantic import ValidationError
 
 # Directory Modules
-from webapi.models import (
+from API.models import (
     User,
     SignUpUser,
     AuthResponse,
@@ -20,8 +21,24 @@ from webapi.models import (
     ContactSales,
     ContactSalesResponse
 )
-from propai.prompt_gen import get_llm_response
+from Valora.prompt_gen import get_llm_response
 from db_connection import get_db_conn
+
+
+def get_existing_user(cur, email):
+    cur.execute("""\
+        SELECT 1\
+        FROM users\
+        WHERE email = %s;
+    """, (email, ))
+    return cur.fetchone()
+
+
+def get_columns(data: dict) -> Tuple[List, str, List]:
+    cols = [key for key in data if data[key] != None]
+    placeholders = ", ".join(["%s"] * len(cols))
+    values = [(data[key]) for key in cols]
+    return cols, placeholders, values
 
 
 #Enviroment Variables
@@ -44,6 +61,11 @@ app.add_middleware(
 )
 
 
+@app.exception_handler(Exception)
+async def custom_exception_handler(request: Request, e: Exception):
+    return JSONResponse(status_code=400, content={"detail": f"{type(e).__name__} - {str(e)}"})
+
+
 @app.post("/signup")
 async def signup(user: SignUpUser):
     """
@@ -54,22 +76,14 @@ async def signup(user: SignUpUser):
     with get_db_conn() as conn:
         with conn.cursor() as cur:
             try:
-                # Checking if someone already exists
-                cur.execute("""\
-                    SELECT 1\
-                    FROM users\
-                    WHERE email = %s; 
-                """, (user.email,))
-                existing_user = cur.fetchone()
-                if existing_user:
+                if get_existing_user(cur, user.email):
                     raise HTTPException(status_code=409, detail="User already exists")
+
+                # Checking if someone already exists
 
                 user_dict = dict(user)
                 user_dict["password"] = ph.hash(user_dict["password"])
-
-                cols = [key for key in user_dict if user_dict[key] != None]
-                placeholders = ", ".join(["%s"] * len(cols))
-                values = [(user_dict[key], ) for key in cols]
+                cols, placeholders, values = get_columns(user_dict)
 
                 # Inserting to Users Table
                 cur.execute(f"""\
@@ -164,9 +178,7 @@ async def contact_sales(contact_sales_form: ContactSales):
         raise HTTPException(status_code=429, detail=str(e))
 
     contact_sales_form_dict = dict(contact_sales_form)
-    columns = [key for key in contact_sales_form_dict if contact_sales_form_dict[key] != None]
-    insert_values = [(contact_sales_form_dict[key], ) for key in contact_sales_form_dict]
-    placeholders = ", ".join(["%s"] * len(columns))
+    cols, placeholders, values = get_columns(contact_sales_form_dict)
 
     if not contact_sales_form.email:
         raise HTTPException(status_code=400, detail="You must provide an email")
@@ -174,27 +186,20 @@ async def contact_sales(contact_sales_form: ContactSales):
     with get_db_conn() as conn:
         with conn.cursor() as cur:
             try:
-                # Checking if user exists
-                cur.execute("""\
-                    SELECT 1\
-                    FROM contact_sales\
-                    WHERE email = %s;\
-                """, (contact_sales_form.email, ))
-                existing_user = cur.fetchone()
-                if existing_user:
+                if get_existing_user(cur, contact_sales_form.email):
                     raise HTTPException(status_code=409, detail="User with email already exists")
 
                 # Adding to Contact Sales Table
                 cur.execute(f"""
-                        INSERT INTO contact_sales({", ".join(columns)})\
+                        INSERT INTO contact_sales({", ".join(cols)})\
                         VALUES ({placeholders})\
                         RETURNING id;\
-                """, insert_values)
+                """, values)
                 conn.commit()
 
                 user_id = cur.fetchone()
                 if not user_id:
-                    raise Exception
+                    raise HTTPException(status_code=500, detail="Something went wrong")
                 return ContactSalesResponse(status=200, response="Successfully Added")
 
             except psycopg2.Error as e:

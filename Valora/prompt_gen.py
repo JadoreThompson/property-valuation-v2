@@ -6,6 +6,7 @@ from pprint import pprint, pformat
 
 # LangChain Modules
 from langchain.agents import initialize_agent
+from langchain.memory import ConversationBufferWindowMemory
 from langchain.output_parsers import ResponseSchema, StructuredOutputParser
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_core.prompts import ChatPromptTemplate, FewShotPromptTemplate, PromptTemplate, \
@@ -42,47 +43,56 @@ DB = SQLDatabase.from_uri(
 
 # Defining LLM
 LLM = ChatGoogleGenerativeAI(model="gemini-1.5-flash", temperature=0.0)
-
+conversational_memory = ConversationBufferWindowMemory(
+    memory_key='chat_history',
+    k=5,
+    return_messages=True
+)
 
 # Templates
 RESPONSE_TEMPLATE = """\
 You are an expert analyst in the real estate industry tasked with answering\
 a broad range of questions.
 
-Generate an informative, comprehensive and coherent response\
-all the while maintaining a concise structure. Your response should be based around\
+Generate an informative, comprehensive, and coherent response\
+while maintaining a concise structure. Your response should be based on\
 the provided search results (content) and data from within our database.\
-You should use a helpful tone. Combine the search results and the data together to form your response.\
-You should use bullet points in your answer for readability when necessary. When talking about prices\
-remember to put only one pound sign at the beginning of the number and commas for every thousand\
-as well as rounding to the nearest pound. 
+Use a helpful tone and combine the search results and the data to form your response.\
+For readability, include bullet points where necessary. When mentioning prices,\
+use a single pound sign at the start of the number, include commas for every thousand,\
+and round to the nearest pound.
 
-
-Anything between the following 'context' block is retrieved form a knowledge bank\
-and is not part of the conversation between the user.
+Anything between the following 'context' block is retrieved from a knowledge bank\
+and is not part of the conversation between you and the user. Use the knowledge bank\
+to provide information appropriate to the user's question:
 
 <context>
     {context}
-<context/>
+</context>
 
-You must use the history to gain insight into what the user is trying to ask if he history is there.\
-If there is nothing in the context relevant to the question at hand, and the history doesn't help\
-to answer the user's question just respond with "Hmm, that one I'm not sure about".
+REMEMBER: Use the chat history to answer the user's question.\
+If no relevant context is available and you cannot use the chat history,\
+simply reply with "Hmm, that one I'm not sure about." Only do this if both\
+the chat history and context data cannot be used to answer the question. Your response\
+should be no more than 250 words and remain concise, avoiding unnecessary elaboration.\
+Do not speak negatively about the data sources. Merge the search results and database information\
+to create a unified answer. In your response, avoid phrases like "Our resources"—\
+you are the information bank, so speak with authority. Provide a well-rounded answer,\
+resolving any conflicting data by averaging the differences or combining the information logically.\
+Ensure the final answer is consistent and conflict-free, with no lists of conflicting values.\
+If you have to average out the prices, return the averaged out prices as your answer
 
-REMEMBER: Use the history to answer  the user's question.\
-If there is no relevant context, and you can't use the chat history to answer the user's question\
-simply reply with "Hmm, that one I'm not sure about". Only do this if you can't use the chat history\
-and the context data can't be used to answer the question. Your response should be no more than\
-250 words. Your response still needs to be concise so do not talk more than you need to. Ensure your response\
-doesn't talk bad about our data source. Merge the data source and the provided search results together to perfect an answer.  
+Question: {input}
 
-Question: {input}\
+Below is the chat history; use it to inform your answer if needed:
+{chat_history}
+
+Use the history to gain insight into the user's intent. If the context is irrelevant to the question\
+and the history doesn't help, respond with "Hmm, that one I'm not sure about."
+
+The date is {date}.
 """
 
-"""
-Below is the chat history, use the chat history to answer the user's question if needed
-{history}
-"""
 
 FEW_SHOT_PREFIX = """
 You are an agent designed to interact with a SQL database.\
@@ -259,6 +269,19 @@ LLM_CHAIN = (llm_prompt | LLM | StrOutputParser())
 SQL_AGENT = configure_sql_agent()
 TOPIC_CHAIN = configure_topic_agent()
 
+def get_session_history(session_id: str) -> BaseChatMessageHistory:
+    if session_id not in STORE:
+        STORE[session_id] = ChatMessageHistory()
+    return STORE[session_id]
+
+STORE = {}
+with_message_history = RunnableWithMessageHistory(
+    LLM_CHAIN,
+    get_session_history,
+    input_messages_key="input",
+    history_messages_key="history",
+)
+
 
 async def create_context(question):
     # Processing all Agents
@@ -269,30 +292,30 @@ async def create_context(question):
     sql_agent_result, topic_chain_result, access_internet_result = await asyncio.gather(
         sql_agent_task,
         topic_chain_task,
-        access_internet_task
+        access_internet_task,
+        return_exceptions=True
     )
 
     # Removing empty fields
     topic_chain_result = {key: value for key, value in topic_chain_result.items() if topic_chain_result[key].strip()}
 
-    # Retrieving information
+    # PropertyPortal Tool Activation
     zoopla_task = asyncio.create_task(search_zoopla(PropertySearchInput(**topic_chain_result)))
     rightmove_task = asyncio.create_task(search_rightmove(PropertySearchInput(**topic_chain_result)))
+    onthemarket_task = asyncio.create_task(search_onthemarket(PropertySearchInput(**topic_chain_result)))
 
-    zoopla_result, rightmove_result = await asyncio.gather(
+    zoopla_result, rightmove_result, onthemarket_result = await asyncio.gather(
         zoopla_task,
-        rightmove_task
+        rightmove_task,
+        onthemarket_task,
+        return_exceptions=True
     )
 
     portal_results = [result.dict() for result in rightmove_result]
     if zoopla_result != None:
         portal_results.append([result.dict() for result in zoopla_result])
-
-    print(json.dumps({
-        "sql_agent_result": sql_agent_result,
-        "property_portal_result": portal_results,
-        "access_internet_result": access_internet_result
-    }, indent=4))
+    if onthemarket_result != None:
+        portal_results.append([result.dict() for result in onthemarket_result])
 
     return {
         "sql_agent_result": sql_agent_result,
@@ -304,8 +327,30 @@ async def create_context(question):
 import asyncio
 async def get_llm_response(question):
     context = await create_context(question)
-    print("\nAnswer: \n", await LLM_CHAIN.ainvoke({"input": question, "context": context}))
+
+    # chain = RunnableWithMessageHistory(
+    #     RunnablePassthrough.assign(
+    #         context=lambda _: context,
+    #         input=lambda x: x['input']
+    #     ) | LLM_CHAIN,
+    #     lambda session_id: conversational_memory,
+    #     input_messages_key="input",
+    #     history_messages_key="chat_history"
+    # )
+
+    # response = await chain.invoke(
+    #     {"input": question},
+    #     config={"configurable": {"session_id": "my_session"}}
+    # )
+
+    response = await with_message_history.ainvoke(
+        {"input": question, "context": context, "chat_history": STORE, "date": datetime.now()},
+        config={"configurable": {"session_id": "abc123"}}
+    )
+
+    return response
 
 
 if __name__ == "__main__":
     asyncio.run(get_llm_response("average price of a house in enfield"))
+    # asyncio.run(create_context("average price of a house in enfield"))

@@ -88,10 +88,11 @@ async def search_rightmove(search_params: PropertySearchInput) -> List[Property]
                         link=link
                     ))
                 except Exception as e:
-                    print(f"Search Rightmove: {type(e).__name__} - {str(e)}")
+                    #print(f"Search Rightmove: {type(e).__name__} - {str(e)}")
                     continue
     except Exception as e:
-        print(f"Search Rightmove: {type(e).__name__} - {str(e)}")
+        #print(f"Search Rightmove: {type(e).__name__} - {str(e)}")
+        pass
     finally:
         return properties
 
@@ -147,11 +148,72 @@ async def search_zoopla(search_params: PropertySearchInput):
                         link=link
                     ))
                 except Exception as e:
-                    print(f"Search Zoopla: {type(e).__name__} - {str(e)}")
+                    # print(f"Search Zoopla: {type(e).__name__} - {str(e)}")
                     continue
 
     except Exception as e:
-        print(f"Search Zoopla: {type(e).__name__} - {str(e)}")
+        # print(f"Search Zoopla: {type(e).__name__} - {str(e)}")
+        pass
+    finally:
+        return properties
+
+
+async def search_onthemarket(search_params: PropertySearchInput):
+    properties = []
+
+    try:
+        async with async_playwright() as p:
+            browser = await p.chromium.launch(headless=True)
+            page = await browser.new_page()
+
+            # Constructing the URL
+            url = f"https://www.onthemarket.com/for-sale/{search_params.property_type if search_params.property_type else "property"}/{search_params.location.lower()}/?"
+
+            if search_params.min_price:
+                url += f"min-price={search_params.min_price}&"
+            if search_params.max_price:
+                url += f"max-price={search_params.max_price}&"
+
+            # Going to page
+            await page.goto(url)
+
+            # Handling Cookie
+            cookie = page.locator("button:has-text('Accept all')").nth(1)
+            await cookie.click()
+
+            await page.locator("button:has-text('Sort: Recommended')").click()
+            await page.locator("span:has-text('Highest price')").click()
+
+            # Handling all the cards
+            result_cards = await page.query_selector_all(".otm-PropertyCard")
+            for card in result_cards:
+                try:
+                    address_locator = await card.query_selector("span.address a")
+                    address = await address_locator.text_content()
+
+                    price_locator = await card.query_selector("div.otm-Price a")
+                    price = await price_locator.text_content()
+
+                    description_locator = await card.query_selector("div.otm-PropertyCardInfo ul")
+                    description = await description_locator.text_content()
+
+                    link_locator = await card.query_selector("div.otm-Price a")
+                    link = f"https://www.onthemarket.com{await link_locator.get_attribute("href")}"
+
+                    properties.append(Property(
+                        address=address,
+                        price=price,
+                        description=description,
+                        link=link
+                    ))
+
+                except Exception as e:
+                    #print(f"Search Zoopla: {type(e).__name__} - {str(e)}")
+                    continue
+
+    except Exception as e:
+        # print(f"On the Market: {type(e).__name__} - {str(e)}")
+        pass
     finally:
         return properties
 
@@ -237,8 +299,8 @@ class ZooplaSearchTool(BaseTool):
 
 
 if __name__ == "__main__":
-    asyncio.run(search_zoopla(PropertySearchInput(
+    asyncio.run(search_onthemarket(PropertySearchInput(
         location="london",
-        min_price=500000,
+        min_price="500000",
         property_type="detached"
     )))

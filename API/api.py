@@ -66,6 +66,11 @@ async def custom_exception_handler(request: Request, e: Exception):
     return JSONResponse(status_code=400, content={"detail": f"{type(e).__name__} - {str(e)}"})
 
 
+@app.get("/")
+async def read_root():
+    return {"status_code": 200, "detail": "Success"}
+
+
 @app.post("/signup")
 async def signup(user: SignUpUser):
     """
@@ -209,4 +214,4 @@ async def contact_sales(contact_sales_form: ContactSales):
 
 
 if __name__ == "__main__":
-    uvicorn.run("api:app", host="0.0.0.0", port=80, reload=True)
+    uvicorn.run("api:app", port=80, reload=True)

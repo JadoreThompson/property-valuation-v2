@@ -23,8 +23,8 @@ SERP_API_KEY = os.getenv("SERP_API_KEY")
 
 class PropertySearchInput(BaseModel):
     location: str = Field(default=None, description="The location to search for properties")
-    min_price: Optional[int] = Field(default=None, description="Minimum Price")
-    max_price: Optional[int] = Field(default=None, description="Maximum Price")
+    min_price: Optional[str] = Field(default=None, description="Minimum Price")
+    max_price: Optional[str] = Field(default=None, description="Maximum Price")
     property_type: Optional[str] = Field(default=None, description="Type of property (e.g., house, flat, detached)")
 
 
@@ -97,16 +97,16 @@ async def search_rightmove(search_params: PropertySearchInput) -> List[Property]
 
 
 async def search_zoopla(search_params: PropertySearchInput):
+    # TODO: Get proxy for headless mode, currently getting blocked
     """
     :param search_params:
     :return: A list of properties from the first page that mach the features specified in the form
         of the Property Class
     """
     properties = []
-
     try:
         async with async_playwright() as p:
-            browser = await p.chromium.launch(headless=False)
+            browser = await p.chromium.launch(headless=True)
             page = await browser.new_page()
 
             # Constructing URL
@@ -122,7 +122,7 @@ async def search_zoopla(search_params: PropertySearchInput):
 
             # Heading to page and handling cookie
             await page.goto(url)
-            await page.locator("button:has-text('Continue')").click(timeout=5000)
+            await page.locator("#onetrust-accept-btn-handler").click(timeout=5000)
 
             # Handling all the cards
             result_cards = await page.query_selector_all(".dkr2t83")
@@ -153,20 +153,17 @@ async def search_zoopla(search_params: PropertySearchInput):
     except Exception as e:
         print(f"Search Zoopla: {type(e).__name__} - {str(e)}")
     finally:
-        for p in properties:
-            print(p)
-            print("\n")
         return properties
 
 
-async def access_internet(tool_input: str) -> List[str]:
+async def access_internet(query: str) -> List[str]:
     """
     Return relating google search answers.
-    :param tool_input:
+    :param query:
     :return: List[Relating Answers]:
     """
     params = {
-        "q": tool_input,
+        "q": query,
         "location": "United Kingdom",
         "api_key": SERP_API_KEY
     }
@@ -175,19 +172,19 @@ async def access_internet(tool_input: str) -> List[str]:
     async with aiohttp.ClientSession() as session:
         async with session.get(SERP_ENDPOINT, params=params) as rsp:
             data = await rsp.json()
-
             # Snippet is the key for the answer
-            related_question_answers = [item["snippet"] for item in data["related_questions"]]
+            related_question_answers = [item.get("snippet", None) for item in data["related_questions"]]
 
     return related_question_answers
 
 
 class RightMoveSearchTool(BaseTool):
-    name = "rightmove_search"
-    description = "Search properties on Rightmove"
+    name: str = "rightmove_search"
+    description: str = "Search properties on Rightmove"
     args_schema: Type[BaseModel] = PropertySearchInput
+    return_direct: bool = False
 
-    def _run(self, location: str, min_price: Optional[int] = None, max_price: Optional[int] = None,
+    def _run(self, location: str, min_price: Optional[str] = None, max_price: Optional[str] = None,
              property_type: Optional[str] = None):
         search_params = PropertySearchInput(
             location=location,
@@ -198,13 +195,25 @@ class RightMoveSearchTool(BaseTool):
         results = asyncio.run(search_rightmove(search_params))
         return [result.dict() for result in results]
 
+    async def _arun(self, location: str, min_price: Optional[str] = None, max_price: Optional[str] = None,
+             property_type: Optional[str] = None):
+        search_params = PropertySearchInput(
+            location=location,
+            min_price=min_price,
+            max_price=max_price,
+            property_type=property_type
+        )
+        results = await search_rightmove(search_params)
+        return [result.dict() for result in results]
+
 
 class ZooplaSearchTool(BaseTool):
-    name = "zoopla_search"
-    description = "Search properties on Zoopla"
+    name: str = "zoopla_search"
+    description: str = "Search properties on Zoopla"
     args_schema: Type[BaseModel] = PropertySearchInput
+    return_direct: bool = False
 
-    def _run(self, location: str, min_price: Optional[int] = None, max_price: Optional[int] = None,
+    def _run(self, location: str, min_price: Optional[str] = None, max_price: Optional[str] = None,
              property_type: Optional[str] = None):
         search_params = PropertySearchInput(
             location=location,
@@ -215,9 +224,19 @@ class ZooplaSearchTool(BaseTool):
         results = asyncio.run(search_zoopla(search_params))
         return [result.dict() for result in results]
 
+    async def _arun(self, location: str, min_price: Optional[str] = None, max_price: Optional[str] = None,
+             property_type: Optional[str] = None):
+        search_params = PropertySearchInput(
+            location=location,
+            min_price=min_price,
+            max_price=max_price,
+            property_type=property_type
+        )
+        results = await search_zoopla(search_params)
+        return [result.dict() for result in results]
+
 
 if __name__ == "__main__":
-    # asyncio.run(access_internet("average price of house with in london"))
     asyncio.run(search_zoopla(PropertySearchInput(
         location="london",
         min_price=500000,

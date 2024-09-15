@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+
+{% block title %}Home{% endblock %}
+
+{% block content %}
+<!--Landing-->
+<section class="section landing-section">
+    <div class="container container-2">
+        <div class="title-container">
+            <h1>Gain the Information you Need without the Extra Tabs</h1>
+        </div>
+        <div class="button-container">
+            <button class="btn btn-primary">View Demo</button>
+            <button class="btn btn-secondary">Try Now</button>
+        </div>
+    </div>
+</section>
+
+<!--Value Proposition-->
+<section class="section value-section">
+    <div class="container container-2">
+        <h1>Fast Track your CMA</h1>
+        <div class="inner-container row">
+            <div class="img-container col-12 col-md-6">
+                <img src="{{ url_for('static', filename='images/pexels-fotoaibe-1571460.jpg') }}" alt="">
+            </div>
+            <p class="col-12 col-md-6">Finding the right property match can be a grind, especially when you're juggling multiple listings and trying to get a CMA done quickly. That's where our app comes in. It speeds up the research process, giving you back the time to focus on what really matters—closing deals. With just a few clicks, you'll have the data you need, all in one place, so you can make faster, smarter decisions without the headache.</p>
+        </div>
+    </div>
+</section>
+
+<!--Testimonials-->
+<section class="section">
+    <div class="container testimonials-container">
+        <h1>Don't just take our word for it</h1>
+        <div class=" testimonials-row row">
+            <div class="col-12 col-md-4">
+                <div class="testimonial-card card">
+                    <div class="card-body">
+                        <h4>{Brand Name} CMA is a great tool that makes any agent look savvy</h4>
+                    </div>
+                    <div class="card-footer">
+                    </div>
+                </div>
+            </div>
+            <div class="col-12 col-md-4">
+                <div class="card testimonial-card">
+                    <div class="card-body">
+                        <h4>I'm now able to fly through research, before it was so long</h4>
+                    </div>
+                </div>
+            </div>
+            <div class="col-12 col-md-4">
+                <div class="card testimonial-card">
+                    <div class="card-body">
+                        <h4>I can finally have a non-cluttered desktop, the amount of tabs I had open was gross. Now it's clean</h4>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<script src="{{ url_for('static', filename='index.js') }}"></script>
+{% endblock %}

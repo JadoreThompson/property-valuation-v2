@@ -1,0 +1,389 @@
+/* Universals */
+* {
+    font-family: "Lora", serif;
+    font-weight: 625;
+}
+
+.btn:active {
+    filter: brightness(75%);
+}
+
+.btn-primary {
+    background-color: #a2d2ff;
+    border: 1px solid #a2d2ff;
+}
+
+.btn-primary:hover {
+    background-color: #86c4ff;
+    border: 1px solid #86c4ff;
+}
+
+.btn-primary:active {
+    background-color: #7bbfff !important;
+    border: 1px solid #7bbfff !important;
+}
+
+.btn-secondary {
+    background-color: rgba(0,0,0,0);
+    border: 1px solid #a2d2ff;
+    color: black;
+}
+
+.btn-secondary:hover {
+    background-color: rgba(0,0,0,0);
+    border: 1px solid #86c4ff;
+    color: black;
+}
+
+.btn-secondary:active {
+    background-color: rgba(0,0,0,0) !important;
+    border: 1px solid #7bbfff !important;
+    color: black;
+}
+
+.loading-screen {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: white;
+}
+
+.loader {
+  border: 16px solid #f3f3f3;
+  border-radius: 50%;
+  border-top: 16px solid #e1c2c2;
+  width: 1rem;
+  height: 1rem;
+  -webkit-animation: spin 2s linear infinite; /* Safari */
+  animation: spin 2s linear infinite;
+}
+
+/* Safari */
+@-webkit-keyframes spin {
+  0% { -webkit-transform: rotate(0deg); }
+  100% { -webkit-transform: rotate(360deg); }
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+i {
+    cursor: pointer;
+    color: white;
+}
+
+textarea {
+    border: none;
+    resize: none;
+    outline: none;
+    display: flex;
+    align-items: center;
+    margin: 0;
+}
+
+textarea:focus {
+    outline: none;
+}
+
+
+/* Index Page */
+.section {
+    height: 60vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.container-2 {
+    text-align: center;
+}
+
+.landing-section .container-2 {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+.title-container {
+    width: 50%;
+}
+
+.button-container {
+    margin-top: 1rem;
+}
+
+.landing-section {
+    background-color: #f9f9f9;
+}
+
+.section.value-section {
+    min-height: 50vh;
+}
+
+.value-section .container-2 {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.inner-container {
+    width: 60%;
+    padding: 1rem;
+}
+
+.inner-container img {
+    border-radius: 1rem;
+}
+
+.inner-container p {
+    color: #6c757d;
+    text-align: left;
+}
+
+.img-container img{
+    height: 100%;
+    width: 100%;
+}
+
+.testimonials-container {
+    text-align: center;
+}
+
+.testimonial-card {
+    margin-bottom: 1rem;
+}
+
+.testimonial-card .card-body h4{
+    font-size: 1.5rem;
+    font-weight: 200;
+}
+
+/*Dashboard Page*/
+.input-container-housing {
+    display: flex;
+    position: fixed;
+    background-color: white;
+    bottom:0;
+    left: 0;
+    right: 0;
+    max-width: 100%;
+    align-items: center;
+    justify-content: center;
+    padding: 0.5rem;
+    z-index: 1000;
+}
+
+.input-container {
+    border: 1px solid #08281d;
+    border-radius: 0.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 80%;
+    max-width: 100%;
+    box-sizing: border-box;
+}
+
+.input-container textarea {
+    border: 0;
+    width: 100%;
+    resize: none;
+    display: flex;
+}
+
+@media (min-width: 1080px) {
+    .input-container,
+     .all-messages-container {
+        width: 40%;
+    }
+}
+
+ul {
+    list-style: none;
+    padding-left: 0;
+    padding-right: 0;
+    margin: 0;
+}
+
+li {
+    word-wrap: break-word;
+    overflow: break-word;
+    max-width: 100%;
+}
+
+p {
+    padding: 0;
+    margin: 0;
+}
+
+ul .llm-container {
+    border: 1px solid black;
+    border-radius: 1rem;
+    margin-top: 1rem;
+    margin-bottom: 1rem;
+    background-color: white;
+    padding: 1rem;
+}
+
+.incoming-container,
+.outgoing-container {
+    box-shadow: 0.1rem 0.1rem 0.1rem #e8d0d0;
+    border-radius: 1rem;
+    margin-bottom: 1rem;
+    padding: 1rem;
+}
+
+.incoming-container {
+    border: 0.15rem solid #e8d0d0;
+}
+
+.incoming-container .icon-container {
+    width: 3rem;
+    padding: 0.2rem;
+    border: 1px solid #e2c4c4;
+    margin-left: auto;
+}
+
+.outgoing-container {
+    border: 0.15rem solid #79bbfa;
+}
+
+.action-toolbar {
+    display: flex;
+    justify-content: flex-end; /* Align items to the right */
+    align-items: center; /* Align items vertically */
+    gap: 0.5rem; /* Space between buttons */
+    margin-top: 0.5rem; /* Optional: Add margin above the buttons */
+    width: 100%; /* Ensure the toolbar takes up the full width */
+}
+
+.action {
+    display: flex;
+    align-items: center;
+    padding: 0.2rem;
+    border: 0.1rem solid #e2c4c4;
+    border-radius: 0.5rem;
+}
+
+.action:hover {
+    cursor: pointer;
+}
+
+.action i,
+.action span {
+    font-size: 0.75rem;
+}
+
+.action i {
+    margin-right: 0.25rem;
+    color: black;
+}
+
+.icon-container {
+    padding: 0.5rem;
+    border-radius: 0.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.icon-container:hover {
+    filter: brightness(90%);
+    cursor: pointer;
+}
+
+.icon-container i,
+.icon-container span {
+    font-size: 0.75rem;
+}
+
+.icon-container i {
+    margin-right: 0.1rem;
+}
+
+.icon-container span {
+}
+
+.cancel-edit-btn {
+    display: none;
+}
+
+.edit-button-container {
+    border: 1px solid black;
+    margin: 0;
+}
+
+.fa-pencil {
+    color: black;
+}
+
+.all-messages-container {
+    max-height: calc(100vh - 1rem);
+}
+
+.user-input-textarea {
+    border: 1px solid black;
+    resize: both;
+    /*box-sizing: border-box;*/
+    outline: black;
+    max-height: 300px; /* Set the maximum height */
+    min-height: 0.5rem; /* Set a minimum height for better usability */
+    width: 100%;/* Make the textarea full width */
+}
+
+.user-input-textarea:focus {
+    outline: black;
+}
+
+
+/*Pricing Page*/
+.cta-container {
+    text-align: center;
+}
+
+.cta-container span {
+    color: #5a625b;
+}
+
+/* Pricing Card Related */
+ .card:hover {
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+ }
+
+.promo-card {
+    box-shadow: 0 1px 2px rgba(217, 153, 79, 0.55);
+    border: 1px solid rgba(217, 153, 79, 0..1);
+}
+
+.promo-card:hover {
+    border: 1px solid rgba(217, 153, 79, 0.55);
+    box-shadow: 0 6px 12px rgba(217, 153, 79, 0.55);
+}
+
+.pricing-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100vw;
+}
+
+.pricing-card-title {
+    /*text-align: center;*/
+    padding: 1rem;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+}
+
+.price {
+    font-size: 2rem;
+}
+
+.pricing-period {
+    color: #5a625b;
+    margin-top: auto;
+}

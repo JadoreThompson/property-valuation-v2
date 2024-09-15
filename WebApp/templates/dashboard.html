@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard{% endblock %}
+
+{% block content %}
+<main role="main">
+    <!-- All Messages -->
+    <div class="container all-messages-container mt-5 mb-7">
+        <ul id="all-messages">
+        </ul>
+    </div>
+
+    <!--Loading Wheel-->
+    <div id="loading-wheel" class="loading-screen" style="display: none;">
+        <div class="loader"></div>
+    </div>
+
+    <!--Input prompt container-->
+    <div class="container input-container-housing">
+        <div class="container input-container" style="display: flex; justify-content: center; align-items: center;">
+            <textarea style="height: 35px;" class="user-input-textarea" id="user-textarea" placeholder="Enter message"></textarea>
+            <div class="icon-container" style="background-color: #79bbfa; width: 2rem; height: 2rem;">
+                <i id="prompt-submit" class="fa-solid fa-arrow-up" style="color: white; font-size: 1rem; margin: 0;"></i>
+            </div>
+        </div>
+    </div>
+</main>
+
+<script src="{{ url_for('static', filename='dashboard.js') }}"></script>
+{% endblock %}

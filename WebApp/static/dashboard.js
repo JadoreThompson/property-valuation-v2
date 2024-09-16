@@ -69,7 +69,7 @@ document.addEventListener('DOMContentLoaded', async function() {
         allMessageContainer.appendChild(newDiv);
         allMessageContainer.scrollTop = allMessageContainer.scrollHeight;
 
-        //await getResponse(question);
+        await getResponse(question);
     }
 
     async function addBotMessage(response) {

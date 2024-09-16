@@ -3,28 +3,72 @@
 {% block title %}Dashboard{% endblock %}
 
 {% block content %}
-<main role="main">
-    <!-- All Messages -->
-    <div class="container all-messages-container mt-5 mb-7">
-        <ul id="all-messages">
-        </ul>
+<nav class="navbar navbar-expand-lg">
+    <div class="container">
+        <a class="navbar-brand" href="#">Chat Bot</a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav ms-auto">
+                <li class="nav-item">
+                    <a class="nav-link" href="#">Home</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#">About</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#">Contact</a>
+                </li>
+            </ul>
+        </div>
     </div>
+</nav>
 
-    <!--Loading Wheel-->
-    <div id="loading-wheel" class="loading-screen" style="display: none;">
-        <div class="loader"></div>
+<div class="chat-container">
+    <div class="chat-messages">
+        <div class="message bot-message">
+            Hello! How can I assist you today?
+        </div>
+        <div class="message user-message">
+            Hi there! I have a question about your services.
+        </div>
+        <div class="message bot-message">
+            Of course! I'd be happy to help. What would you like to know about our services?
+        </div>
+        <div class="message user-message">
+            Can you tell me more about your pricing options?
+        </div>
+        <div class="message bot-message">
+            Certainly! We offer several pricing tiers to suit different needs. Our basic plan starts at $9.99 per month and includes up to 100 queries. For more intensive use, we have a professional plan at $29.99 per month with unlimited queries and priority support. We also offer custom enterprise solutions. Would you like more details on any specific plan?
+        </div>
+        <div class="message user-message">
+            Can you tell me more about your pricing options?
+        </div>
+        <div class="message bot-message">
+            Certainly! We offer several pricing tiers to suit different needs. Our basic plan starts at $9.99 per month and includes up to 100 queries. For more intensive use, we have a professional plan at $29.99 per month with unlimited queries and priority support. We also offer custom enterprise solutions. Would you like more details on any specific plan?
+        </div>
+        <div class="message user-message">
+            Can you tell me more about your pricing options?
+        </div>
+        <div class="message bot-message">
+            Certainly! We offer several pricing tiers to suit different needs. Our basic plan starts at $9.99 per month and includes up to 100 queries. For more intensive use, we have a professional plan at $29.99 per month with unlimited queries and priority support. We also offer custom enterprise solutions. Would you like more details on any specific plan?
+        </div>
     </div>
-
-    <!--Input prompt container-->
-    <div class="container input-container-housing">
-        <div class="container input-container" style="display: flex; justify-content: center; align-items: center;">
-            <textarea style="height: 35px;" class="user-input-textarea" id="user-textarea" placeholder="Enter message"></textarea>
-            <div class="icon-container" style="background-color: #79bbfa; width: 2rem; height: 2rem;">
-                <i id="prompt-submit" class="fa-solid fa-arrow-up" style="color: white; font-size: 1rem; margin: 0;"></i>
+    <!--User Input Area-->
+    <div class="input-area">
+        <div class="container">
+            <div class="row">
+                <div class="col-10">
+                    <textarea id="user-input-textarea" class="form-control" rows="2" placeholder="Type your message here..."></textarea>
+                </div>
+                <div class="col-2">
+                    <button id="user-input-button" class="btn btn-primary h-100 w-100">Send</button>
+                </div>
             </div>
         </div>
     </div>
-</main>
+</div>
 
 <script src="{{ url_for('static', filename='dashboard.js') }}"></script>
 {% endblock %}

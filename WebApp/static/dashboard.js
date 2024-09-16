@@ -24,13 +24,22 @@ document.addEventListener('DOMContentLoaded', async function() {
         }
     }
 
-    // Testing
-    //await getResponse("average price of a house in enfield");
-
-
     /* User Input */
+    function adjustHeight() {
+        userInputTextArea.style.height = 'auto';
+        const newHeight = Math.min(userInputTextArea.scrollHeight, 300);
+        userInputTextArea.style.height = `${newHeight}px`;
+
+        // Enable or disable scrolling based on content height
+        userInputTextArea.style.overflowY = textArea.scrollHeight > 300 ? 'auto' : 'hidden';
+    }
+    // Initial adjustment
+    userInputTextArea.addEventListener('input', adjustHeight);
+    window.addEventListener('resize', adjustHeight);
+
     userInputSubmitButton.addEventListener('click', function(){
         addUserMessage(userInputTextArea.value.trim());
+        userInputTextArea.value = '';
     });
 
     userInputTextArea.addEventListener('keypress', function(e){
@@ -48,6 +57,7 @@ document.addEventListener('DOMContentLoaded', async function() {
         newDiv.textContent = question;
 
         allMessageContainer.appendChild(newDiv);
+        allMessageContainer.scrollTop = allMessageContainer.scrollHeight;
         await getResponse(question);
     }
 
@@ -58,5 +68,6 @@ document.addEventListener('DOMContentLoaded', async function() {
         newDiv.textContent = response;
 
         allMessageContainer.appendChild(newDiv);
+        allMessageContainer.scrollTop = allMessageContainer.scrollHeight;
     }
 });

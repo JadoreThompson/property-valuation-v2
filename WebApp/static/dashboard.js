@@ -4,6 +4,7 @@ document.addEventListener('DOMContentLoaded', async function() {
 
     /* API Requests */
     async function getResponse(prompt) {
+        let message;
         url = "http://127.0.0.1:80/get-response";
 
         try {
@@ -18,9 +19,13 @@ document.addEventListener('DOMContentLoaded', async function() {
             }
 
             const data = await rsp.json();
-            await addBotMessage(data.response);
+            message = data.response;
+
         } catch(e) {
             console.log("Error: ", e);
+            message = e;
+        } finally {
+            await addBotMessage(message);
         }
     }
 
@@ -31,7 +36,7 @@ document.addEventListener('DOMContentLoaded', async function() {
         userInputTextArea.style.height = `${newHeight}px`;
 
         // Enable or disable scrolling based on content height
-        userInputTextArea.style.overflowY = textArea.scrollHeight > 300 ? 'auto' : 'hidden';
+        userInputTextArea.style.overflowY = userInputTextArea.scrollHeight > 300 ? 'auto' : 'hidden';
     }
     // Initial adjustment
     userInputTextArea.addEventListener('input', adjustHeight);
@@ -53,12 +58,18 @@ document.addEventListener('DOMContentLoaded', async function() {
     async function addUserMessage(question)  {
         const allMessageContainer = document.querySelector('.chat-messages');
         const newDiv = document.createElement('div');
+        const editButton = document.createElement('button');
+
         newDiv.className = 'message user-message';
         newDiv.textContent = question;
+        editButton.className = 'action-button edit-button';
+        editButton.textContent = 'Edit';
 
+        newDiv.appendChild(editButton);
         allMessageContainer.appendChild(newDiv);
         allMessageContainer.scrollTop = allMessageContainer.scrollHeight;
-        await getResponse(question);
+
+        //await getResponse(question);
     }
 
     async function addBotMessage(response) {

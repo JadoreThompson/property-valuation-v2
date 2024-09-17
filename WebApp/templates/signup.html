@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+
+{% block title %}Sign Up{% endblock %}
+
+{% block content %}
+
+<section class="auth-section">
+    <div class="card auth-card">
+        <div class="card-title">
+            <h2>Sign Up</h2>
+        </div>
+        <div class="card-body">
+            <form id="signupForm" class="auth-form">
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label for="fname">First Name</label>
+                        <input class="form-control" type="text" id="fname" name="fname" required>
+                    </div>
+                    <div class="col-md-6">
+                        <label for="sname">Second Name</label>
+                        <input class="form-control" type="text" id="sname" name="sname" required>
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label for="email">Email</label>
+                    <input type="text" class="form-control" id="email" name="email" autocomplete="on" required>
+                </div>
+                <div class="mb-3">
+                    <label for="password">Password</label>
+                    <input type="password" class="form-control" id="password" autocomplete="on" name="password" required>
+                </div>
+                <div class="mb-3">
+                    <button id="signupFormSubmit" type="submit" class="btn btn-primary">Submit</button>
+                </div>
+                <div class="mb-3">
+                    <span id="signupLink">Already have an account?<a href="/login">Login</a></span>
+                </div>
+                <div class="mb-3">
+                    <span id="signupFormStatus" class="auth-form-status"></span>
+                </div>
+            </form>
+        </div>
+    </div>
+</section>
+
+<script src="{{ url_for('static', filename='signup.js') }}"></script>
+{% endblock %}

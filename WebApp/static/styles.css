@@ -454,3 +454,6 @@ body {
 }
 .auth-form {
 }
+.mb-3 span.auth-form-status {
+    text-align: center;
+}

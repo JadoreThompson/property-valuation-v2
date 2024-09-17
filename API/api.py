@@ -89,10 +89,9 @@ async def signup(user: SignUpUser):
     with get_db_conn() as conn:
         with conn.cursor() as cur:
             try:
-                if get_existing_user(cur, user.email):
-                    raise HTTPException(status_code=409, detail="User already exists")
-
                 # Checking if someone already exists
+                if get_existing_user(cur=cur, email=user.email):
+                    raise HTTPException(status_code=409, detail="User already exists")
 
                 user_dict = dict(user)
                 user_dict["password"] = ph.hash(user_dict["password"])

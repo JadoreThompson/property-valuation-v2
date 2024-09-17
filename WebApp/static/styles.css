@@ -323,7 +323,6 @@ body {
 
 
 /* Contact Sales Styles */
-/* Contact Sales Page Styles */
 .contact-hero {
     background: linear-gradient(135deg, #faf9f7 0%, #f0ece3 100%);
     padding: 60px 0;
@@ -376,4 +375,7 @@ body {
     .contact-hero p {
         font-size: 1rem;
     }
+}
+#formStatus {
+    visibility: hidden;
 }

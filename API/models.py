@@ -37,3 +37,13 @@ class ContactSalesForm(BaseModel):
     phone: str
     employees: int = Field(ge=1)
     message: str = Field(max_length=200)
+
+
+if __name__ == "__main__":
+    user = ContactSalesForm(
+        name="ja",
+        email="email",
+        phone="phone",
+        employees=0,
+        message="hi"
+    )

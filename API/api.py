@@ -1,23 +1,27 @@
 import json
+import psycopg2
 from typing import List, Tuple, Any
-
 import aiohttp
 import argon2.exceptions
 from argon2 import PasswordHasher
 
 # FastAPI Modules
-import psycopg2
+import pydantic
+#from pydantic import ValidationError
+from pydantic_core import ValidationError
+
 import uvicorn
 from fastapi import FastAPI, HTTPException,Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
-from pydantic import ValidationError
+from fastapi.exceptions import RequestValidationError
 
 # Directory Modules
 from API.models import *
 from Valora.prompt_gen import get_llm_response
 from db_connection import get_db_conn
 from API.tele import *
+
 
 def get_existing_user(cur, email, table="password"):
     cur.execute(f"""\
@@ -55,6 +59,16 @@ app.add_middleware(
 )
 
 
+# Custom ValidationError
+@app.exception_handler(pydantic.ValidationError)
+async def validation_exception_handler(request: Request, e: pydantic.ValidationError):
+    return JSONResponse(
+        status_code=422,
+        content={"detail": "Form fields not submitted correctly", "message": 'fail'}
+    )
+
+
+# Custom normal Exception Handler
 @app.exception_handler(Exception)
 async def custom_exception_handler(request: Request, e: Exception):
     return JSONResponse(status_code=400, content={"detail": f"{type(e).__name__} - {str(e)}"})

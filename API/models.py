@@ -2,7 +2,7 @@ import re
 from enum import Enum
 
 # Pydantic and Fast API related
-from pydantic import BaseModel, Field, field_validator, ValidationError, model_validator
+from pydantic import BaseModel, Field, field_validator, ValidationError, model_validator, constr
 from typing import Optional, List, Any
 
 
@@ -43,7 +43,7 @@ class ContactSalesForm(BaseModel):
     email: str
     phone: str
     employees: int = Field(ge=1)
-    message: str = Field(max_length=200)
+    message: str
 
 
 class CheckoutForm(BaseModel):

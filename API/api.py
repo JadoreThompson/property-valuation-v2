@@ -60,8 +60,8 @@ app.add_middleware(
 
 
 # Custom ValidationError
-@app.exception_handler(pydantic.ValidationError)
-async def validation_exception_handler(request: Request, e: pydantic.ValidationError):
+@app.exception_handler(ValidationError)
+async def validation_exception_handler(request: Request, e: ValidationError):
     return JSONResponse(
         status_code=422,
         content={"detail": "Form fields not submitted correctly", "message": 'fail'}
@@ -198,6 +198,13 @@ async def contact_sales(form: ContactSalesForm):
 # TODO: Improve Security on endpoint
 @app.post("/checkout")
 async def checkout(form: CheckoutForm):
+    """
+    :param form[CheckoutForm]:
+    :return:
+        - 200, success
+        - 404, email doesn't exists
+        - 500, DB error
+    """
     with get_db_conn() as conn:
         with conn.cursor() as cur:
             try:

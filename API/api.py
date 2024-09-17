@@ -23,9 +23,9 @@ from db_connection import get_db_conn
 from API.tele import *
 
 
-def get_existing_user(cur, email, table="password"):
+def get_existing_user(cur, email, table="users", field='1'):
     cur.execute(f"""\
-        SELECT 1\
+        SELECT {field}\
         FROM {table}\
         WHERE email = %s;
     """, (email, ))
@@ -132,8 +132,7 @@ async def login(user: User):
         with conn.cursor() as cur:
             try:
                 # Checking if someone already exists
-
-                existing_user = get_existing_user(cur=cur, email=user.email)
+                existing_user = get_existing_user(cur=cur, email=user.email, field='password')
                 if not existing_user:
                     raise HTTPException(status_code=409, detail="User doesn't exist")
 

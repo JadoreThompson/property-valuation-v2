@@ -36,3 +36,8 @@ def dashboard():
 @views.route("/pricing")
 def pricing():
     return render_template("pricing.html")
+
+
+@views.route("/login")
+def login():
+    return render_template("login.html")

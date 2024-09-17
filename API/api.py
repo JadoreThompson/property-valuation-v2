@@ -1,5 +1,7 @@
 import json
 from typing import List, Tuple, Any
+
+import aiohttp
 import argon2.exceptions
 from argon2 import PasswordHasher
 
@@ -12,23 +14,15 @@ from fastapi.responses import JSONResponse
 from pydantic import ValidationError
 
 # Directory Modules
-from API.models import (
-    User,
-    SignUpUser,
-    AuthResponse,
-    ChatRequest,
-    ChatResponse,
-    ContactSales,
-    ContactSalesResponse
-)
+from API.models import *
 from Valora.prompt_gen import get_llm_response
 from db_connection import get_db_conn
+from API.tele import *
 
-
-def get_existing_user(cur, email):
-    cur.execute("""\
+def get_existing_user(cur, email, table="password"):
+    cur.execute(f"""\
         SELECT 1\
-        FROM users\
+        FROM {table}\
         WHERE email = %s;
     """, (email, ))
     return cur.fetchone()
@@ -124,13 +118,8 @@ async def login(user: User):
         with conn.cursor() as cur:
             try:
                 # Checking if someone already exists
-                cur.execute("""\
-                    SELECT password\
-                    FROM users\
-                    WHERE email = %s; 
-                """, (user.email, ))
-                existing_user = cur.fetchone()
 
+                existing_user = get_existing_user(cur=cur, email=user.email)
                 if not existing_user:
                     raise HTTPException(status_code=409, detail="User doesn't exist")
 
@@ -165,52 +154,33 @@ async def get_response(chat_request: ChatRequest):
         raise HTTPException(status_code=500, detail="Something went wrong, please try again")
 
 
-@app.post("/contact-sales", response_model=ContactSalesResponse)
-async def contact_sales(contact_sales_form: ContactSales):
+@app.post("/contact-sales")
+async def contact_sales(form: ContactSalesForm):
     """
-    :param contact_sales_form:
-    :return: HTTPException:
-        - 200, email supplied and new user added to Contact Sales Table
-        - 400, no email supplied
-        - 409, user with email already exists
-        - 500, internal server error
+    :param ContactSalesForm:
+    :return:
     """
-
-    try:
-        assert contact_sales_form
-    except ValidationError as e:
-        print(e)
-        raise HTTPException(status_code=429, detail=str(e))
-
-    contact_sales_form_dict = dict(contact_sales_form)
-    cols, placeholders, values = get_columns(contact_sales_form_dict)
-
-    if not contact_sales_form.email:
-        raise HTTPException(status_code=400, detail="You must provide an email")
-
     with get_db_conn() as conn:
         with conn.cursor() as cur:
             try:
-                if get_existing_user(cur, contact_sales_form.email):
-                    raise HTTPException(status_code=409, detail="User with email already exists")
+                if get_existing_user(cur=cur, email=form.email, table="contact_sales"):
+                    raise HTTPException(status_code=409, detail="User has already contacted sales")
 
-                # Adding to Contact Sales Table
-                cur.execute(f"""
-                        INSERT INTO contact_sales({", ".join(cols)})\
-                        VALUES ({placeholders})\
-                        RETURNING id;\
-                """, values)
+                # Insert
+                cols, placeholders, vals = get_columns(form.dict())
+                cur.execute(f"""\
+                    INSERT INTO contact_sales({", ".join(cols)})
+                    VALUES ({placeholders})
+                    RETURNING id;
+                """, vals)
                 conn.commit()
-
-                user_id = cur.fetchone()
-                if not user_id:
-                    raise HTTPException(status_code=500, detail="Something went wrong")
-                return ContactSalesResponse(status=200, response="Successfully Added")
-
+                if cur.fetchone():
+                    raise HTTPException(status_code=200, detail="We'll Contact You Soon")
+            # TODO: Perform Action on the form e.g. Send Email
             except psycopg2.Error as e:
                 conn.rollback()
-                print("Psycopg2 Error: ", str(e))
-                raise HTTPException(status_code=500, detail="Something went wrong please try again.")
+                print(f"Contact Sales: {type(e).__name__} - {str(e)}")
+                raise HTTPException(status_code=500, detail="Internal Server Error")
 
 
 if __name__ == "__main__":

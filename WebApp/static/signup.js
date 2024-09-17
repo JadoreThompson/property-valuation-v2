@@ -12,7 +12,6 @@ document.addEventListener('DOMContentLoaded', function(){
             for (let [k, v] of formData.entries()) {
                 if (v.trim()) {
                     formObj[k] = v;
-                    console.log(`Key: ${k}, Value: ${v}`);
                 } else {
                     throw new Error('Fields Missing');
                 }
@@ -37,7 +36,17 @@ document.addEventListener('DOMContentLoaded', function(){
                 const data = await rsp.json()
 
                 if (rsp.status == 200) {
-                    window.location.href = '/dashboard';
+                    console.log("below");
+                    console.log({email: formObj["email"]});
+                    const rsp2 = await fetch("/get-email", {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({email: formObj["email"]})
+                    });
+
+                    const data2 = await rsp2.json();
+                    console.log(data2);
+                    window.location.href = '/pricing';
                 } else {
                     console.log(data.detail);
                     throw new Error(data.detail);

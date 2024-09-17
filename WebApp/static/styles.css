@@ -353,6 +353,9 @@ body {
     color: var(--primary-color);
     margin-right: 10px;
 }
+.pricing-button a {
+    color: var(--text-color);
+}
 
 
 /* Contact Sales Styles */

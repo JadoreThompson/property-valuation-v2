@@ -1,8 +1,15 @@
 import re
+from enum import Enum
 
 # Pydantic and Fast API related
 from pydantic import BaseModel, Field, field_validator, ValidationError, model_validator
 from typing import Optional, List, Any
+
+
+class PricingPlan(Enum):
+    BASIC = 'basic'
+    PREMIUM = 'premium'
+    ENTERPRISE = 'enterprise'
 
 
 class HTTPResponse(BaseModel):
@@ -37,6 +44,15 @@ class ContactSalesForm(BaseModel):
     phone: str
     employees: int = Field(ge=1)
     message: str = Field(max_length=200)
+
+
+class CheckoutForm(BaseModel):
+    name: str
+    email: str
+    card_number: str = Field(min_length=16, max_length=16)
+    expiry: str
+    cvv: str = Field(min_length=3, max_length=3)
+    pricing_plan: PricingPlan
 
 
 if __name__ == "__main__":

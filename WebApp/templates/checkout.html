@@ -1,0 +1,122 @@
+{% extends "base.html" %}
+
+{% block title %}Checkout{% endblock %}
+
+{% block content %}
+<nav class="navbar navbar-expand-lg navbar-light">
+    <div class="container">
+        <a class="navbar-brand" href="/">PropValAI</a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav ms-auto">
+                <li class="nav-item">
+                    <a class="nav-link" href="/">Home</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="/pricing">Pricing</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="/dashboard">Dashboard</a>
+                </li>
+            </ul>
+        </div>
+    </div>
+</nav>
+
+<section class="checkout-hero text-center py-5">
+    <div class="container">
+        <h1>Checkout</h1>
+        <p class="lead">Review your details and complete your subscription.</p>
+    </div>
+</section>
+
+<section class="checkout-form py-5">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-md-8">
+                <div class="card">
+                    <div class="card-body">
+                        <form id="checkoutForm">
+                            <div class="mb-3">
+                                <label for="name" class="form-label">Name</label>
+                                <input type="text" class="form-control" id="name" name="name">
+                            </div>
+                            <div class="mb-3">
+                                <label for="email" class="form-label">Email address</label>
+                                <input type="email" class="form-control" id="email" name="email" value="{{ email }}">
+                            </div>
+                            <div class="mb-3">
+                                <label for="plan" class="form-label">Selected Plan</label><br>
+<!--                                <input type="text" class="form-control" id="plan" name="plan" value="" readonly>-->
+                                <label for="basic">Basic</label>
+                                <input type="radio" id="basic" name="pricing_plan" value="basic"
+                                       {% if plan == 'basic' %} checked {% endif %}>
+
+                                <label for="premium">Premium</label>
+                                <input type="radio" id="premium" name="pricing_plan" value="premium"
+                                {% if plan == 'premium' %} checked {% endif %}>
+
+                                <label for="enterprise">Premium</label>
+                                <input type="radio" id="enterprise" name="pricing_plan" value="enterprise"
+                                {% if plan == 'enterprise' %} checked {% endif %}>
+                            </div>
+                            <div class="mb-3">
+                                <label for="card_number" class="form-label">Card Number</label>
+                                <input type="number" class="form-control" id="card_number" name="card_number" required>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="expiry" class="form-label">Expiry Date</label>
+                                    <input type="text" class="form-control" id="expiry" name="expiry" placeholder="MM/YY" required>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="cvv" class="form-label">CVV</label>
+                                    <input type="number" class="form-control" id="cvv" name="cvv" required>
+                                </div>
+                            </div>
+                            <button id="checkoutSubmitBtn" type="submit" class="btn btn-primary">Complete Payment</button>
+                            <span id="checkoutStatus" hidden></span>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<footer>
+    <div class="container">
+        <div class="row">
+            <div class="col-md-3 col-sm-6 mb-4">
+                <h5>Product</h5>
+                <ul class="list-unstyled">
+                    <li><a href="#">Features</a></li>
+                    <li><a href="/pricing">Pricing</a></li>
+                    <li><a href="#">Case Studies</a></li>
+                </ul>
+            </div>
+            <div class="col-md-3 col-sm-6 mb-4">
+                <h5>Company</h5>
+                <ul class="list-unstyled">
+                    <li><a href="#">About Us</a></li>
+                    <li><a href="/contact">Contact</a></li>
+                </ul>
+            </div>
+        </div>
+        <hr>
+        <div class="row">
+            <div class="col-md-6 text-center text-md-start">
+                <p>&copy; 2024 PropValAI. All rights reserved.</p>
+            </div>
+            <div class="col-md-6 text-center text-md-end">
+                <a href="#" class="me-3">Privacy Policy</a>
+                <a href="#">Terms of Service</a>
+            </div>
+        </div>
+    </div>
+</footer>
+
+<script src="{{ url_for('static', filename='checkout.js') }}"></script>
+{% endblock %}

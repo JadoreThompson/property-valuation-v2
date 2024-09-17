@@ -195,5 +195,41 @@ async def contact_sales(form: ContactSalesForm):
                 raise HTTPException(status_code=500, detail="Internal Server Error")
 
 
+# TODO: Improve Security on endpoint
+@app.post("/checkout")
+async def checkout(form: CheckoutForm):
+    with get_db_conn() as conn:
+        with conn.cursor() as cur:
+            try:
+                if not get_existing_user(cur=cur, email=form.email):
+                    raise HTTPException(
+                        status_code=404,
+                        detail="Please sign up"
+                    )
+
+                # Updating pricing plan
+                cur.execute("""\
+                    UPDATE users
+                    SET pricing_plan = %s
+                    WHERE email = %s
+                    RETURNING id;
+                """, (form.pricing_plan.value.strip(), form.email, ))
+                conn.commit()
+                if not cur.fetchone():
+                    raise psycopg2.Error
+
+                raise HTTPException(
+                    status_code=200,
+                    detail="Payment Successful"
+                )
+            except psycopg2.Error as e:
+                conn.rollback()
+                print(f"Checkout: {type(e).__name__} - {str(e)}")
+                raise HTTPException(
+                    status_code=500,
+                    detail="Internal Server Error, please try again"
+                )
+
+
 if __name__ == "__main__":
     uvicorn.run("api:app", port=80, reload=True)

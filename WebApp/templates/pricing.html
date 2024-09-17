@@ -3,73 +3,183 @@
 {% block title %}Pricing{% endblock %}
 
 {% block content %}
-<!--Pricing Cards-->
-<section style="max-width: 100vw; height: 100vh; display: flex; flex-direction: column; justify-content: center; align-items: center;">
-    <div class="cta-container" style="margin-bottom: 7rem;">
-        <h1 style="margin-bottom: 1rem;">Choose the plan that fits your needs</h1>
-        <span>Unlock the power of AI and automate your workflow</span>
+<nav class="navbar navbar-expand-lg navbar-light">
+    <div class="container">
+        <a class="navbar-brand" href="#">PropValAI</a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav ms-auto">
+                <li class="nav-item">
+                    <a class="nav-link" href="/">Home</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link active" href="#">Pricing</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#">Contact</a>
+                </li>
+            </ul>
+        </div>
     </div>
+</nav>
 
-    <div class="container pricing-container row" style="top: 0;">
-        <div class="col-12 col-md-4 mb-3">
-            <div class="card">
-                <div class="card-title pricing-card-title">
-                    <div class="pricing-card-title-inner">
-                        <span class="price">£15</span>
-                        <span class="pricing-period">per month</span>
+<section class="pricing-hero text-center py-5">
+    <div class="container">
+        <h1>Choose the Right Plan for Your Business</h1>
+        <p class="lead">Flexible pricing options to suit your needs and scale with your growth.</p>
+    </div>
+</section>
+
+<section class="pricing-plans py-5">
+    <div class="container">
+        <div class="row">
+            <div class="col-md-4 mb-4">
+                <div class="card pricing-card">
+                    <div class="card-body">
+                        <h5 class="card-title text-center">Starter</h5>
+                        <h6 class="card-price text-center">£49<span class="period">/month</span></h6>
+                        <hr>
+                        <ul class="list-unstyled">
+                            <li><i class="fas fa-check tick-icon"></i> Up to 50 valuations/month</li>
+                            <li><i class="fas fa-check tick-icon"></i> Basic CMA reports</li>
+                            <li><i class="fas fa-check tick-icon"></i> Email support</li>
+                        </ul>
+                        <div class="d-grid">
+                            <a href="#" class="btn btn-primary text-uppercase">Choose Plan</a>
+                        </div>
                     </div>
                 </div>
-                <div class="card-body">
-                    <ul>
-                        <li><p>Unlimited Projects</p></li>
-                        <li><p>Share with team members</p></li>
-                        <li><p>20GB Storage</p></li>
-                    </ul>
-                </div>
-                <div class="card-footer">
-                    <button class="btn">Join Now</button>
-                </div>
             </div>
-        </div>
-
-        <div class="col-12 col-md-4 mb-3">
-            <div class="card promo-card">
-                <div class="card-title pricing-card-title">
-                    <h2>Free</h2>
-                </div>
-                <div class="card-body">
-                    <ul>
-                        <li><p>Unlimited Projects</p></li>
-                        <li><p>Share with team members</p></li>
-                        <li><p>20GB Storage</p></li>
-                    </ul>
-                </div>
-                <div class="card-footer">
-                    <button class="btn">Try For Free</button>
-                </div>
-            </div>
-        </div>
-
-        <div class="col-12 col-md-4 mb-3">
-            <div class="card">
-                <div class="card-title pricing-card-title">
-                    <div class="pricing-card-title-inner">
-                        <span class="price">£50</span>
-                        <span class="pricing-period">per month</span>
+            <div class="col-md-4 mb-4">
+                <div class="card pricing-card">
+                    <div class="card-body">
+                        <h5 class="card-title text-center">Professional</h5>
+                        <h6 class="card-price text-center">£99<span class="period">/month</span></h6>
+                        <hr>
+                        <ul class="list-unstyled">
+                            <li><i class="fas fa-check tick-icon"></i> Up to 200 valuations/month</li>
+                            <li><i class="fas fa-check tick-icon"></i> Advanced CMA reports</li>
+                            <li><i class="fas fa-check tick-icon"></i> Priority email support</li>
+                            <li><i class="fas fa-check tick-icon"></i> API access</li>
+                        </ul>
+                        <div class="d-grid">
+                            <a href="#" class="btn btn-primary text-uppercase">Choose Plan</a>
+                        </div>
                     </div>
                 </div>
-                <div class="card-body">
-                    <ul>
-                        <li><p>Unlimited Projects</p></li>
-                        <li><p>Share with team members</p></li>
-                        <li><p>20GB Storage</p></li>
-                    </ul>
-                </div>
-                <div class="card-footer">
-                    <button class="btn">Join Now</button>
+            </div>
+            <div class="col-md-4 mb-4">
+                <div class="card pricing-card">
+                    <div class="card-body">
+                        <h5 class="card-title text-center">Enterprise</h5>
+                        <h6 class="card-price text-center">Custom</h6>
+                        <hr>
+                        <ul class="list-unstyled">
+                            <li><i class="fas fa-check tick-icon"></i> Unlimited valuations</li>
+                            <li><i class="fas fa-check tick-icon"></i> Custom CMA reports</li>
+                            <li><i class="fas fa-check tick-icon"></i> 24/7 phone & email support</li>
+                            <li><i class="fas fa-check tick-icon"></i> Dedicated account manager</li>
+                            <li><i class="fas fa-check tick-icon"></i> Custom integrations</li>
+                        </ul>
+                        <div class="d-grid">
+                            <a href="#" class="btn btn-primary text-uppercase">Contact Sales</a>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 </section>
+
+<section class="faq py-5">
+    <div class="container">
+        <h2 class="text-center mb-5">Frequently Asked Questions</h2>
+        <div class="accordion" id="faqAccordion">
+            <div class="accordion-item">
+                <h2 class="accordion-header" id="headingOne">
+                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne" aria-expanded="false" aria-controls="collapseOne">
+                        Can I switch plans later?
+                    </button>
+                </h2>
+                <div id="collapseOne" class="accordion-collapse collapse" aria-labelledby="headingOne" data-bs-parent="#faqAccordion">
+                    <div class="accordion-body">
+                        Yes, you can upgrade or downgrade your plan at any time. Changes will be reflected in your next billing cycle.
+                    </div>
+                </div>
+            </div>
+            <div class="accordion-item">
+                <h2 class="accordion-header" id="headingTwo">
+                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseTwo" aria-expanded="false" aria-controls="collapseTwo">
+                        Is there a free trial available?
+                    </button>
+                </h2>
+                <div id="collapseTwo" class="accordion-collapse collapse" aria-labelledby="headingTwo" data-bs-parent="#faqAccordion">
+                    <div class="accordion-body">
+                        We offer a 14-day free trial for all our plans. No credit card required to start.
+                    </div>
+                </div>
+            </div>
+            <div class="accordion-item">
+                <h2 class="accordion-header" id="headingThree">
+                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseThree" aria-expanded="false" aria-controls="collapseThree">
+                        What payment methods do you accept?
+                    </button>
+                </h2>
+                <div id="collapseThree" class="accordion-collapse collapse" aria-labelledby="headingThree" data-bs-parent="#faqAccordion">
+                    <div class="accordion-body">
+                        We accept all major credit cards and offer invoice payment options for Enterprise customers.
+                    </div>
+                </div>
+            </div>
+            <div class="accordion-item">
+                <h2 class="accordion-header" id="headingFour">
+                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseFour" aria-expanded="false" aria-controls="collapseFour">
+                        Do you offer refunds?
+                    </button>
+                </h2>
+                <div id="collapseFour" class="accordion-collapse collapse" aria-labelledby="headingFour" data-bs-parent="#faqAccordion">
+                    <div class="accordion-body">
+                        We offer a 30-day money-back guarantee. If you're not satisfied, contact us for a full refund.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<footer>
+    <div class="container">
+        <div class="row">
+            <div class="col-md-3 col-sm-6 mb-4">
+                <h5>Product</h5>
+                <ul class="list-unstyled">
+                    <li><a href="#">Features</a></li>
+                    <li><a href="/pricing">Pricing</a></li>
+                    <li><a href="#">Case Studies</a></li>
+                </ul>
+            </div>
+            <div class="col-md-3 col-sm-6 mb-4">
+                <h5>Company</h5>
+                <ul class="list-unstyled">
+                    <li><a href="#">About Us</a></li>
+                </ul>
+            </div>
+        </div>
+        <hr>
+        <div class="row">
+            <div class="col-md-6 text-center text-md-start">
+                <p>&copy; 2024 PropValAI. All rights reserved.</p>
+            </div>
+            <div class="col-md-6 text-center text-md-end">
+                <a href="#" class="me-3">Privacy Policy</a>
+                <a href="#">Terms of Service</a>
+            </div>
+        </div>
+    </div>
+</footer>
+
+<!--<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>-->
+<!--<script src="https://kit.fontawesome.com/your-fontawesome-kit.js" crossorigin="anonymous"></script>-->
 {% endblock %}

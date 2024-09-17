@@ -5,6 +5,9 @@
     --background-color: #faf9f7;
     --text-color: #5c5245;
 }
+html {
+    scroll-behaviour: smooth;
+}
 body {
     font-family: Lora;
     color: var(--text-color);

@@ -34,14 +34,13 @@ document.addEventListener('DOMContentLoaded', async function() {
         userInputTextArea.style.height = 'auto';
         const newHeight = Math.min(userInputTextArea.scrollHeight, 300);
         userInputTextArea.style.height = `${newHeight}px`;
-
         // Enable or disable scrolling based on content height
         userInputTextArea.style.overflowY = userInputTextArea.scrollHeight > 300 ? 'auto' : 'hidden';
     }
-    // Initial adjustment
     userInputTextArea.addEventListener('input', adjustHeight);
     window.addEventListener('resize', adjustHeight);
 
+    // User Input Listeners
     userInputSubmitButton.addEventListener('click', function(){
         addUserMessage(userInputTextArea.value.trim());
         userInputTextArea.value = '';

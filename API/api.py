@@ -252,70 +252,94 @@ async def create_room(room_request: CreateRoomRequest):
     :return:
         -
     """
+    print("Room request received:", room_request)
+
     with get_db_conn() as conn:
         with conn.cursor() as cur:
             try:
+                # Getting admin ID
+                print(f"Fetching admin ID for email: {room_request.email}")
                 admin_id = get_existing_user(cur=cur, email=room_request.email, field='id')
+                print("Admin ID:", admin_id)
+
                 if not admin_id:
                     raise HTTPException(
-                        status_code=403,
+                        status_code=401,
                         detail="Must be logged in"
                     )
 
                 # Getting Pricing Plan
-                cur.execute("""\
+                print(f"Fetching pricing plan for email: {room_request.email}")
+                cur.execute("""
                     SELECT pricing_plan
                     FROM users
                     WHERE email = %s;
                 """, (room_request.email,))
                 plan = cur.fetchone()
+                print("Pricing plan:", plan)
+
                 if not plan:
                     raise HTTPException(
-                        status_code=404,
+                        status_code=403,
                         detail="Must be a paid member"
                     )
 
                 # Checking Limit
-                cur.execute("""\
+                print(f"Checking room limit for admin ID: {admin_id}")
+                cur.execute("""
                     SELECT room_name, COUNT(room_name) OVER() AS total_rooms
                     FROM rooms
                     WHERE admin_id = %s
                     GROUP BY room_name;
                 """, (admin_id,))
                 existing_room_data = cur.fetchone()
+                print("Existing room data:", existing_room_data)
+
                 limit = max_rooms[plan[0]]
+                print(f"Room limit for plan {plan[0]}: {limit}")
 
                 if existing_room_data:
                     if existing_room_data[1] == limit:
                         raise HTTPException(
-                            status_code=401,
-                            detail="You've reach your limit"
+                            status_code=412,
+                            detail="You've reached your limit"
                         )
 
                     existing_rooms = [room for room in existing_room_data[0]]
+                    print("Existing rooms:", existing_rooms)
+
                     if room_request.room_name in existing_rooms:
                         raise HTTPException(
-                            status_code=403,
+                            status_code=412,
                             detail="This room already exists"
                         )
 
                 # Creating new room
+                print("Creating new room:", room_request.room_name)
                 data = room_request.dict()
                 del data["email"]
                 data["admin_id"] = admin_id[0]
                 cols, placeholders, vals = get_insert_data(data)
-                cur.execute(f"""\
+                print(f"Inserting room with data: {data}")
+
+                cur.execute(f"""
                     INSERT INTO rooms ({", ".join(cols)})
                     VALUES ({placeholders})
                     RETURNING id;
                 """, vals)
                 conn.commit()
-                if not cur.fetchone():
+
+                new_room_id = cur.fetchone()
+                print("New room ID:", new_room_id)
+
+                if not new_room_id:
                     raise psycopg2.Error
+
                 raise HTTPException(
                     status_code=200,
                     detail="New Room Created"
                 )
+
             except psycopg2.Error as e:
                 conn.rollback()
                 print(f"Create Room: {type(e).__name__} - {str(e)}")

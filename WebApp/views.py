@@ -44,26 +44,31 @@ def dashboard():
     """
     :return: dashboard page
     """
-    all_rooms = None
-
     with get_db_conn() as conn:
         with conn.cursor() as cur:
+            # Get the user ID based on the email from the session
             cur.execute("""
                 SELECT id
                 FROM users
                 WHERE email = %s;
             """, (session["email"], ))
             user_id = cur.fetchone()
-            # Grabbing room nams
-            cur.execute("""\
-                SELECT room_name\
-                FROM rooms\
+
+            # Grabbing room names
+            cur.execute("""
+                SELECT room_name
+                FROM rooms
                 WHERE admin_id = %s;
             """, (user_id[0], ))
-            if cur.fetchone():
-                all_rooms = cur.fetchone()[0]
-            else:
+
+            room = cur.fetchone()  # Store the result to avoid calling fetchone() multiple times
+            if room is None:
                 all_rooms = None
+            else:
+                print(f"Room: type {type(room)} - {room[0]}")
+                all_rooms = [r for r in room]
+                print(all_rooms)
+
     return render_template(
         "dashboard.html",
         email=session["email"],

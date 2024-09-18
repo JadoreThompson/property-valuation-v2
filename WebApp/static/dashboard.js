@@ -132,6 +132,19 @@ document.addEventListener('DOMContentLoaded', async function() {
                     body: JSON.stringify(formObj)
                 });
                 const data = await rsp.json();
+
+                if (rsp.status == 401) {
+                    window.location.href = '/login';
+                }
+                if (rsp.status == 403) {
+                    window.location.href = '/pricing';
+                }
+                if (rsp.status == 412) {
+                    window.alert(data.detail);
+                    // Add this to the card
+                }
+
+
             }
 
             const roomList = document.getElementById('room-list');

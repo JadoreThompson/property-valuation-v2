@@ -157,7 +157,7 @@ document.addEventListener('DOMContentLoaded', async function() {
     // Room Links
     roomLinks.forEach(room => {
         room.addEventListener('click', async function(){
-            
+            room.classList.add('.active');
         });
     });
 });

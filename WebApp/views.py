@@ -46,32 +46,20 @@ def dashboard():
     """
     with get_db_conn() as conn:
         with conn.cursor() as cur:
-            # Get the user ID based on the email from the session
-            cur.execute("""
-                SELECT id
-                FROM users
-                WHERE email = %s;
-            """, (session["email"], ))
-            user_id = cur.fetchone()
+            cur.execute("SELECT id FROM users WHERE email = %s;", (session['email'], ))
+            data = cur.fetchone()
+            admin_id = data[0]
 
-            # Grabbing room names
-            cur.execute("""
-                SELECT room_name
-                FROM rooms
-                WHERE admin_id = %s;
-            """, (user_id[0], ))
-
-            room = cur.fetchone()  # Store the result to avoid calling fetchone() multiple times
-            if room is None:
+            cur.execute("""\
+                SELECT room_name FROM rooms WHERE admin_id = %s;
+            """, (admin_id, ))
+            data = cur.fetchall()
+            if data is None:
                 all_rooms = None
             else:
-                print(f"Room: type {type(room)} - {room[0]}")
-                all_rooms = [r for r in room]
-                print(all_rooms)
-
+                all_rooms = [item[0] for item in data]
     return render_template(
-        "dashboard.html",
-        email=session["email"],
+        "dashboard.html", email=session["email"],
         all_rooms=all_rooms
     )
 
@@ -108,7 +96,6 @@ def logout():
 @views.route("/checkout")
 @login_required
 def checkout():
-    print("Checkout got: ", session["plan"])
     return render_template(
         'checkout.html',
         email=session["email"],

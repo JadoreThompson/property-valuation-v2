@@ -40,8 +40,9 @@ def get_insert_data(data: dict) -> Tuple[List, str, List]:
 
 
 max_rooms = {
-    PricingPlan.BASIC: 1,
-    PricingPlan.PREMIUM: 5
+    PricingPlan.BASIC.value: 1,
+    PricingPlan.ENTERPRISE.value: 5,
+    PricingPlan.PREMIUM.value: 20
 }
 
 #Enviroment Variables
@@ -245,26 +246,63 @@ async def checkout(form: CheckoutForm):
 
 
 @app.post("/create-room")
-async def create_room(admin: CreateRoomRequest):
+async def create_room(room_request: CreateRoomRequest):
     """
-    :param admin:
+    :param room_request:
     :return:
         -
     """
     with get_db_conn() as conn:
         with conn.cursor() as cur:
             try:
-                admin_id = get_existing_user(cur=cur, email=admin.email, field='id')
+                admin_id = get_existing_user(cur=cur, email=room_request.email, field='id')
                 if not admin_id:
                     raise HTTPException(
                         status_code=403,
                         detail="Must be logged in"
                     )
 
+                # Getting Pricing Plan
+                cur.execute("""\
+                    SELECT pricing_plan
+                    FROM users
+                    WHERE email = %s;
+                """, (room_request.email,))
+                plan = cur.fetchone()
+                if not plan:
+                    raise HTTPException(
+                        status_code=404,
+                        detail="Must be a paid member"
+                    )
+
+                # Checking Limit
+                cur.execute("""\
+                    SELECT room_name, COUNT(room_name) OVER() AS total_rooms
+                    FROM rooms
+                    WHERE admin_id = %s
+                    GROUP BY room_name;
+                """, (admin_id,))
+                existing_room_data = cur.fetchone()
+                limit = max_rooms[plan[0]]
+
+                if existing_room_data:
+                    if existing_room_data[1] == limit:
+                        raise HTTPException(
+                            status_code=401,
+                            detail="You've reach your limit"
+                        )
+
+                    existing_rooms = [room for room in existing_room_data[0]]
+                    if room_request.room_name in existing_rooms:
+                        raise HTTPException(
+                            status_code=403,
+                            detail="This room already exists"
+                        )
+
                 # Creating new room
-                data = admin.dict()
+                data = room_request.dict()
                 del data["email"]
-                data["admin_id"] = int(admin_id[0])
+                data["admin_id"] = admin_id[0]
                 cols, placeholders, vals = get_insert_data(data)
                 cur.execute(f"""\
                     INSERT INTO rooms ({", ".join(cols)})

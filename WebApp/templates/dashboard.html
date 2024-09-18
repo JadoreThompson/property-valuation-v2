@@ -21,9 +21,14 @@
             <button id="new-room-btn" class="btn btn-sm btn-primary"><i class="fas fa-plus"></i></button>
         </div>
         <ul id="room-list" class="room-list">
-            <li class="active">Room 1</li>
-            <li>Room 2</li>
-            <li>Room 3</li>
+            {% if all_rooms %}
+                {% for room in all_rooms %}
+                <li>{{ room }}</li>
+                {% endfor %}
+            {% endif %}
+<!--            <li class="active">Room 1</li>-->
+<!--            <li>Room 2</li>-->
+<!--            <li>Room 3</li>-->
         </ul>
     </nav>
 

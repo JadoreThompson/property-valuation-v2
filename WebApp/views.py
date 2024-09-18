@@ -8,7 +8,7 @@ from flask import (
 )
 
 # Directory Modules
-from forms import ContactSalesForm
+from db_connection import get_db_conn
 
 
 views = Blueprint("views", __name__)
@@ -20,7 +20,7 @@ def login_required(f):
     def secure_endpoint(*args, **kwargs):
         if "email" not in session:
             flash("You need to be logged in to access this page.")
-            return redirect(url_for('login'))  # Redirect to the login page
+            return redirect(url_for('views.login'))  # Redirect to the login page
         return f(*args, **kwargs)
     return secure_endpoint
 
@@ -30,8 +30,7 @@ def index():
     """
     :return: Landing Page
     """
-    form = ContactSalesForm()
-    return render_template("index.html", form=form)
+    return render_template("index.html")
 
 
 @views.route('/contact-sales')
@@ -45,7 +44,31 @@ def dashboard():
     """
     :return: dashboard page
     """
-    return render_template("dashboard.html", email=session["email"])
+    all_rooms = None
+
+    with get_db_conn() as conn:
+        with conn.cursor() as cur:
+            cur.execute("""
+                SELECT id
+                FROM users
+                WHERE email = %s;
+            """, (session["email"], ))
+            user_id = cur.fetchone()
+            # Grabbing room nams
+            cur.execute("""\
+                SELECT room_name\
+                FROM rooms\
+                WHERE admin_id = %s;
+            """, (user_id[0], ))
+            if cur.fetchone():
+                all_rooms = cur.fetchone()[0]
+            else:
+                all_rooms = None
+    return render_template(
+        "dashboard.html",
+        email=session["email"],
+        all_rooms=all_rooms
+    )
 
 
 @views.route("/pricing")
@@ -54,7 +77,6 @@ def pricing():
 
 
 @views.route("/login")
-@login_required
 def login():
     return render_template("login.html")
 
@@ -65,6 +87,7 @@ def signup():
 
 
 @views.route("/checkout")
+@login_required
 def checkout():
     return render_template(
         'checkout.html',

@@ -32,12 +32,17 @@ def get_existing_user(cur, email, table="users", field='1'):
     return cur.fetchone()
 
 
-def get_columns(data: dict) -> Tuple[List, str, List]:
+def get_insert_data(data: dict) -> Tuple[List, str, List]:
     cols = [key for key in data if data[key] != None]
     placeholders = ", ".join(["%s"] * len(cols))
     values = [(data[key]) for key in cols]
     return cols, placeholders, values
 
+
+max_rooms = {
+    PricingPlan.BASIC: 1,
+    PricingPlan.PREMIUM: 5
+}
 
 #Enviroment Variables
 ph = PasswordHasher()
@@ -46,7 +51,8 @@ origins = [
     "http://127.0.0.1:5000",
     "http://127.0.0.1:5000/dashboard",
     "https://localhost:5000",
-    "https://localhost:5000/dashboard"
+    "https://localhost:5000/dashboard",
+    "http://127.0.0.1:5000"
 ]
 
 app = FastAPI()
@@ -95,7 +101,7 @@ async def signup(user: SignUpUser):
 
                 user_dict = dict(user)
                 user_dict["password"] = ph.hash(user_dict["password"])
-                cols, placeholders, values = get_columns(user_dict)
+                cols, placeholders, values = get_insert_data(user_dict)
 
                 # Inserting to Users Table
                 cur.execute(f"""\
@@ -179,7 +185,7 @@ async def contact_sales(form: ContactSalesForm):
                     raise HTTPException(status_code=409, detail="User has already contacted sales")
 
                 # Insert
-                cols, placeholders, vals = get_columns(form.dict())
+                cols, placeholders, vals = get_insert_data(form.dict())
                 cur.execute(f"""\
                     INSERT INTO contact_sales({", ".join(cols)})
                     VALUES ({placeholders})
@@ -235,6 +241,49 @@ async def checkout(form: CheckoutForm):
                 raise HTTPException(
                     status_code=500,
                     detail="Internal Server Error, please try again"
+                )
+
+
+@app.post("/create-room")
+async def create_room(admin: CreateRoomRequest):
+    """
+    :param admin:
+    :return:
+        -
+    """
+    with get_db_conn() as conn:
+        with conn.cursor() as cur:
+            try:
+                admin_id = get_existing_user(cur=cur, email=admin.email, field='id')
+                if not admin_id:
+                    raise HTTPException(
+                        status_code=403,
+                        detail="Must be logged in"
+                    )
+
+                # Creating new room
+                data = admin.dict()
+                del data["email"]
+                data["admin_id"] = int(admin_id[0])
+                cols, placeholders, vals = get_insert_data(data)
+                cur.execute(f"""\
+                    INSERT INTO rooms ({", ".join(cols)})
+                    VALUES ({placeholders})
+                    RETURNING id;
+                """, vals)
+                conn.commit()
+                if not cur.fetchone():
+                    raise psycopg2.Error
+                raise HTTPException(
+                    status_code=200,
+                    detail="New Room Created"
+                )
+            except psycopg2.Error as e:
+                conn.rollback()
+                print(f"Create Room: {type(e).__name__} - {str(e)}")
+                raise HTTPException(
+                    status_code=500,
+                    detail="Internal Server Error"
                 )
 
 

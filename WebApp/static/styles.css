@@ -212,6 +212,7 @@ body {
     resize: none;
 }
 
+
 /* Responsive Design */
 @media (max-width: 768px) {
     .dashboard-container {
@@ -294,7 +295,6 @@ body {
 .user-message:hover .action-button {
     opacity: 1;
 }
-
 .action-button:hover {
     text-decoration: underline;
 }
@@ -404,6 +404,49 @@ body {
     border-color: var(--secondary-color);
     color: white;
 }
+/* Create Room Overlay and Card Styles */
+.create-room-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: none;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+.create-room-card {
+    background-color: var(--background-color);
+    padding: 2rem;
+    border-radius: 10px;
+    width: 90%;
+    max-width: 500px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+}
+.create-room-card h2 {
+    color: var(--secondary-color);
+    margin-bottom: 1.5rem;
+}
+.create-room-card .form-group {
+    margin-bottom: 1rem;
+}
+.create-room-card .form-control {
+    border-color: var(--secondary-color);
+}
+.create-room-card .btn {
+    margin-right: 0.5rem;
+}
+/* Responsive design for create room card */
+@media (max-width: 768px) {
+    .create-room-card {
+        width: 95%;
+        padding: 1.5rem;
+    }
+}
+
+/* Existing responsive design styles... */
 #formStatus {
     visibility: hidden;
 }

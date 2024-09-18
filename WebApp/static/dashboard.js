@@ -1,4 +1,12 @@
 document.addEventListener('DOMContentLoaded', async function() {
+    const userEmail = document.querySelector(".user-email").textContent;
+
+    // Create Room Consts
+    const newRoomBtn = document.getElementById('new-room-btn');
+    const createRoomOverlay = document.getElementById('create-room-overlay');
+    const cancelCreateRoomBtn = document.getElementById('cancelCreateRoom');
+    const createRoomForm = document.getElementById('createRoomForm');
+
     // User Input Consts
     const userInputTextArea = document.getElementById('user-input-textarea');
     const userInputSubmitButton = document.getElementById('user-input-button');
@@ -10,6 +18,7 @@ document.addEventListener('DOMContentLoaded', async function() {
     sidebarToggle.addEventListener('click', function() {
         sidebar.classList.toggle('active');
     });
+
 
     /* API Requests */
     async function getResponse(prompt) {
@@ -89,4 +98,51 @@ document.addEventListener('DOMContentLoaded', async function() {
         allMessageContainer.appendChild(newDiv);
         allMessageContainer.scrollTop = allMessageContainer.scrollHeight;
     }
+
+
+    /* Create New Room Functions */
+    newRoomBtn.addEventListener('click', function() {
+        createRoomOverlay.style.display = 'flex';
+    });
+
+    cancelCreateRoomBtn.addEventListener('click', function() {
+        createRoomOverlay.style.display = 'none';
+    });
+
+    createRoomForm.addEventListener('submit', async function(e) {
+        try {
+            e.preventDefault();
+            const roomName = document.getElementById('roomName').value;
+            const formData = new FormData(createRoomForm);
+
+            let formObj = {};
+            for (let [k, v] of formData.entries()) {
+                if (v.trim()) {
+                    formObj[k] = v;
+                } else {
+                    throw new Error('Fields Required');
+                }
+            }
+            formObj["email"] = userEmail;
+
+            if (userEmail) {
+                const rsp = await fetch("http://127.0.0.1:80/create-room", {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(formObj)
+                });
+                const data = await rsp.json();
+            }
+
+            const roomList = document.getElementById('room-list');
+            const newRoom = document.createElement('li');
+            newRoom.textContent = roomName;
+            roomList.appendChild(newRoom);
+
+            createRoomOverlay.style.display = 'none';
+            createRoomForm.reset();
+        } catch (e) {
+
+        }
+    });
 });

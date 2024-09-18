@@ -1,11 +1,28 @@
+import functools
+from functools import wraps
+
 # Flask Modules
-from flask import Blueprint, jsonify, request, render_template, redirect, url_for, session
+from flask import (
+    Blueprint, jsonify, request, render_template, redirect,
+    url_for, session, flash
+)
 
 # Directory Modules
 from forms import ContactSalesForm
 
 
 views = Blueprint("views", __name__)
+
+
+# Login Wrapper
+def login_required(f):
+    @wraps(f)
+    def secure_endpoint(*args, **kwargs):
+        if "email" not in session:
+            flash("You need to be logged in to access this page.")
+            return redirect(url_for('login'))  # Redirect to the login page
+        return f(*args, **kwargs)
+    return secure_endpoint
 
 
 @views.route("/")
@@ -23,11 +40,12 @@ def contact_sales():
 
 
 @views.route("/dashboard")
+@login_required
 def dashboard():
     """
     :return: dashboard page
     """
-    return render_template("dashboard.html")
+    return render_template("dashboard.html", email=session["email"])
 
 
 @views.route("/pricing")
@@ -36,6 +54,7 @@ def pricing():
 
 
 @views.route("/login")
+@login_required
 def login():
     return render_template("login.html")
 

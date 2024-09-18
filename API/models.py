@@ -55,6 +55,11 @@ class CheckoutForm(BaseModel):
     pricing_plan: PricingPlan
 
 
+class CreateRoomRequest(BaseModel):
+    email: str
+    room_name: str = Field(max_length=20)
+
+
 if __name__ == "__main__":
     user = ContactSalesForm(
         name="ja",

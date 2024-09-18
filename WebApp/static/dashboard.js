@@ -1,6 +1,15 @@
 document.addEventListener('DOMContentLoaded', async function() {
+    // User Input Consts
     const userInputTextArea = document.getElementById('user-input-textarea');
     const userInputSubmitButton = document.getElementById('user-input-button');
+
+    // Sidebar Consts
+    const sidebar = document.querySelector('.sidebar');
+    const sidebarToggle = document.getElementById('sidebarToggle');
+
+    sidebarToggle.addEventListener('click', function() {
+        sidebar.classList.toggle('active');
+    });
 
     /* API Requests */
     async function getResponse(prompt) {

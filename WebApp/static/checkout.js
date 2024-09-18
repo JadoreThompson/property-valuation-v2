@@ -6,7 +6,6 @@ document.addEventListener('DOMContentLoaded', async function(){
 
     async function checkout(formObj) {
         try {
-
             const rsp = await fetch("http://127.0.0.1:80/checkout", {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
@@ -15,7 +14,7 @@ document.addEventListener('DOMContentLoaded', async function(){
             const data = await rsp.json();
 
             if (rsp.status == 200) {
-                window.location.href('/dashboard');
+                window.location.href = '/dashboard';
             } else if (rsp.status == 404) {
                 signupPrompt.style.visibility = 'visible';
             } else if (rsp.status == 500) {
@@ -41,9 +40,7 @@ document.addEventListener('DOMContentLoaded', async function(){
                     throw new Error('Fields Missing');
                 }
             }
-            formObj["message"] = formObj["message"].trim();
-            await checkout();
-
+            await checkout(formObj);
         } catch (e) {
             checkoutStatus.textContent = e.message;
             checkoutStatus.style.visibility = 'visible';

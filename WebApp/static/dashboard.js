@@ -135,27 +135,21 @@ document.addEventListener('DOMContentLoaded', async function() {
 
                 if (rsp.status == 401) {
                     window.location.href = '/login';
-                }
-                if (rsp.status == 403) {
+                } else if (rsp.status == 403) {
                     window.location.href = '/pricing';
-                }
-                if (rsp.status == 412) {
+                } else if (rsp.status == 412) {
                     window.alert(data.detail);
                     // Add this to the card
+                } else if (rsp.status == 200) {
+                    const roomList = document.getElementById('room-list');
+                    const newRoom = document.createElement('li');
+                    newRoom.textContent = roomName;
+                    roomList.appendChild(newRoom);
+
+                    createRoomOverlay.style.display = 'none';
+                    createRoomForm.reset();
                 }
-
-
             }
-
-            const roomList = document.getElementById('room-list');
-            const newRoom = document.createElement('li');
-            newRoom.textContent = roomName;
-            roomList.appendChild(newRoom);
-
-            createRoomOverlay.style.display = 'none';
-            createRoomForm.reset();
-        } catch (e) {
-
-        }
+        } catch (e) {}
     });
 });

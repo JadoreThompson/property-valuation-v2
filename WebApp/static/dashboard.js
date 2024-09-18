@@ -7,6 +7,7 @@ document.addEventListener('DOMContentLoaded', async function() {
     const cancelCreateRoomBtn = document.getElementById('cancelCreateRoom');
     const createRoomForm = document.getElementById('createRoomForm');
     const roomLinks = document.querySelectorAll('.room-link');
+    const allRoomsContainer = document.getElementById('room-list');
 
     // User Input Consts
     const userInputTextArea = document.getElementById('user-input-textarea');
@@ -136,12 +137,15 @@ document.addEventListener('DOMContentLoaded', async function() {
 
                 if (rsp.status == 401) {
                     window.location.href = '/login';
-                } else if (rsp.status == 403) {
-                    window.location.href = '/pricing';
+                } else if (rsp.status == 405) {
+                    const roomStatus = document.querySelector('.roomStatus');
+                    roomStatus.textContent = 'Room already exists';
+                    roomStatus.style.display = 'block';
                 } else if (rsp.status == 412) {
                     window.alert(data.detail);
                     // Add this to the card
                 } else if (rsp.status == 200) {
+                    roomStatus.style.display = 'none';
                     const roomList = document.getElementById('room-list');
                     const newRoom = document.createElement('li');
                     newRoom.textContent = roomName;
@@ -154,10 +158,19 @@ document.addEventListener('DOMContentLoaded', async function() {
         } catch (e) {}
     });
 
-    // Room Links
-    roomLinks.forEach(room => {
-        room.addEventListener('click', async function(){
-            room.classList.add('.active');
-        });
+    // Giving room link active status
+    allRoomsContainer.addEventListener('click', function(e){
+        const button = e.target.closest('.room-link');
+
+        if (button) {
+            console.log('button');
+            const activeButtons = document.querySelectorAll('.room-link.active');
+            if (activeButtons){
+                activeButtons.forEach(btn => btn.classList.remove('active'));
+            }
+        }
+
+        button.classList.add('active')
+        console.log(button);
     });
 });

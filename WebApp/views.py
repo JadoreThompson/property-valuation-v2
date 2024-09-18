@@ -81,19 +81,34 @@ def pricing():
     return render_template("pricing.html")
 
 
-@views.route("/login")
-def login():
-    return render_template("login.html")
-
 
 @views.route('/signup')
 def signup():
     return render_template("signup.html")
 
 
+
+@views.route("/login")
+def login():
+    return render_template("login.html")
+
+
+@views.route("/logout")
+@login_required
+def logout():
+    try:
+        session.pop("email")
+        flash("Successfully Logged Out")
+        return redirect(url_for('views.login'))
+    except Exception as e:
+        print(f"Logout: {type(e).__name__} - {str(e)}")
+        return jsonify({"status": 500, "detail": "Something went wrong"}), 500
+
+
 @views.route("/checkout")
 @login_required
 def checkout():
+    print("Checkout got: ", session["plan"])
     return render_template(
         'checkout.html',
         email=session["email"],
@@ -112,5 +127,8 @@ def get_email():
 @views.route('/get-plan', methods=["POST"])
 def get_pricing_plan():
     body = request.get_json()
+    if session["plan"]:
+        session.pop("plan")
     session["plan"] = body["plan"]
+    print("Got plan: ", session["plan"])
     return jsonify({"plan": body["plan"]}), 200

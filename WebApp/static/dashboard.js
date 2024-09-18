@@ -1,11 +1,12 @@
 document.addEventListener('DOMContentLoaded', async function() {
     const userEmail = document.querySelector(".user-email").textContent;
 
-    // Create Room Consts
+    // Room Consts
     const newRoomBtn = document.getElementById('new-room-btn');
     const createRoomOverlay = document.getElementById('create-room-overlay');
     const cancelCreateRoomBtn = document.getElementById('cancelCreateRoom');
     const createRoomForm = document.getElementById('createRoomForm');
+    const roomLinks = document.querySelectorAll('.room-link');
 
     // User Input Consts
     const userInputTextArea = document.getElementById('user-input-textarea');
@@ -100,7 +101,7 @@ document.addEventListener('DOMContentLoaded', async function() {
     }
 
 
-    /* Create New Room Functions */
+    /* Room Functions */
     newRoomBtn.addEventListener('click', function() {
         createRoomOverlay.style.display = 'flex';
     });
@@ -151,5 +152,12 @@ document.addEventListener('DOMContentLoaded', async function() {
                 }
             }
         } catch (e) {}
+    });
+
+    // Room Links
+    roomLinks.forEach(room => {
+        room.addEventListener('click', async function(){
+            
+        });
     });
 });

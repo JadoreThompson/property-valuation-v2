@@ -8,7 +8,7 @@ from typing import Optional, List, Any
 
 class PricingPlan(Enum):
     BASIC = 'basic'
-    PREMIUM = 'premium'
+    PROFESSIONAL = 'professional'
     ENTERPRISE = 'enterprise'
 
 

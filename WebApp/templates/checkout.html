@@ -48,17 +48,16 @@
                                 <input type="email" class="form-control" id="email" name="email" value="{{ email }}">
                             </div>
                             <div class="mb-3">
-                                <label for="plan" class="form-label">Selected Plan</label><br>
-<!--                                <input type="text" class="form-control" id="plan" name="plan" value="" readonly>-->
+                                <label class="form-label">Selected Plan</label><br>
                                 <label for="basic">Basic</label>
                                 <input type="radio" id="basic" name="pricing_plan" value="basic"
                                        {% if plan == 'basic' %} checked {% endif %}>
 
-                                <label for="premium">Premium</label>
-                                <input type="radio" id="premium" name="pricing_plan" value="premium"
-                                {% if plan == 'premium' %} checked {% endif %}>
+                                <label for="professional">Professional</label>
+                                <input type="radio" id="professional" name="pricing_plan" value="professional"
+                                {% if plan == 'professional' %} checked {% endif %}>
 
-                                <label for="enterprise">Premium</label>
+                                <label for="enterprise">Enterprise</label>
                                 <input type="radio" id="enterprise" name="pricing_plan" value="enterprise"
                                 {% if plan == 'enterprise' %} checked {% endif %}>
                             </div>

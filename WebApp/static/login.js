@@ -23,7 +23,13 @@ document.addEventListener('DOMContentLoaded', function(){
                 const data = await rsp.json()
 
                 if (rsp.status == 200) {
-                    window.location.href = '/dashboard';
+                    console.log('success');
+                    const rsp2 = await fetch("/get-email", {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({email: formObj["email"]})
+                    })
+                    window.location.href = "/dashboard";
                 } else {
                     console.log(data.detail);
                     throw new Error(data.detail);

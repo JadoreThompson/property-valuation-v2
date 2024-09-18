@@ -117,5 +117,13 @@ def get_pricing_plan():
     if session["plan"]:
         session.pop("plan")
     session["plan"] = body["plan"]
-    print("Got plan: ", session["plan"])
     return jsonify({"plan": body["plan"]}), 200
+
+
+@views.route("/get-room", methods=["POST"])
+def get_room():
+    body = request.get_json()
+    if session["room_id"]:
+        session.pop("room_id")
+    session["room_id"] = body["room_id"]
+    return jsonify({"room_id": body["room_id"]}), 200

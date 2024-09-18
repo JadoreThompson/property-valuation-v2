@@ -11,7 +11,8 @@ from fastapi.responses import JSONResponse
 from fastapi.exceptions import RequestValidationError
 
 # Directory Modules
-from API import auth, chat
+from API.auth import auth
+from API.chat import chat
 from API.models import (
     ContactSalesForm,
     CheckoutForm,
@@ -21,13 +22,7 @@ from API.robot import get_existing_user, get_insert_data
 from db_connection import get_db_conn
 
 
-max_rooms = {
-    PricingPlan.BASIC.value: 1,
-    PricingPlan.ENTERPRISE.value: 5,
-    PricingPlan.PROFESSIONAL.value: 20
-}
-
-#Enviroment Variables
+# Environment Variables
 origins = [
     "http://127.0.0.1:5000",
     "http://127.0.0.1:5000/dashboard",
@@ -35,6 +30,12 @@ origins = [
     "https://localhost:5000/dashboard",
     "http://127.0.0.1:5000"
 ]
+
+max_rooms = {
+    PricingPlan.BASIC.value: 1,
+    PricingPlan.ENTERPRISE.value: 5,
+    PricingPlan.PROFESSIONAL.value: 20
+}
 
 
 # Initialisation
@@ -50,6 +51,7 @@ app.include_router(auth)
 app.include_router(chat)
 
 
+"""Exception Handlers"""
 # Custom ValidationError
 @app.exception_handler(ValidationError)
 async def validation_exception_handler(request: Request, e: ValidationError):
@@ -59,12 +61,7 @@ async def validation_exception_handler(request: Request, e: ValidationError):
     )
 
 
-# Custom normal Exception Handler
-@app.exception_handler(Exception)
-async def custom_exception_handler(request: Request, e: Exception):
-    return JSONResponse(status_code=400, content={"detail": f"{type(e).__name__} - {str(e)}"})
-
-
+"""Endpoints"""
 @app.get("/")
 async def read_root():
     return {"status_code": 200, "detail": "Success"}
@@ -169,7 +166,6 @@ async def create_room(room_request: CreateRoomRequest):
 
                 # Check current room limit
                 room_limit = max_rooms[admin_data[0][1]]
-                print(f"{room_request["email"]} limit is {room_limit}")
 
                 cur.execute("""\
                     SELECT COUNT(room_name) AS room_count, 
@@ -178,8 +174,6 @@ async def create_room(room_request: CreateRoomRequest):
                     WHERE admin_id = %s; 
                 """, (room_request["admin_id"], ))
                 room_data = cur.fetchall()
-                print("Room Data: ", room_data)
-                print(room_data[0][1])
                 if room_data:
                     if room_data[0][0] == room_limit:
                         raise HTTPException(
@@ -189,7 +183,7 @@ async def create_room(room_request: CreateRoomRequest):
                     if room_request["room_name"] in room_data[0][1]:
                         raise HTTPException(
                             status_code=405,
-                            detail="yo"
+                            detail="Room already exists"
                         )
 
                 # Inserting into table

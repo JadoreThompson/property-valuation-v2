@@ -11,7 +11,7 @@ def get_existing_user(cur, email, table="users", field='1'):
 
 
 def get_insert_data(data: dict) -> Tuple[List, str, List]:
-    cols = [key for key in data if data[key] is None]
+    cols = [key for key in data if data[key]]
     placeholders = ", ".join(["%s"] * len(cols))
     values = [(data[key]) for key in cols]
     return cols, placeholders, values

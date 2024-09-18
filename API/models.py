@@ -1,4 +1,3 @@
-import re
 from enum import Enum
 
 # Pydantic and Fast API related
@@ -12,8 +11,8 @@ class PricingPlan(Enum):
 
 
 class MessageType(Enum):
-    USER = 'user'
-    BOT = 'bot'
+    USER = "user_message"
+    BOT = "bot_message"
 
 
 """Pydantic Models"""
@@ -71,11 +70,16 @@ class Message(BaseModel):
 
 
 class ChatMessage(Message):
-    type: MessageType
+    # type: MessageType
+    type: str
 
 
 class EditMessage(Message):
     message_id: int
+
+
+class RoomRequest(BaseModel):
+    room_name: str
 
 
 if __name__ == "__main__":

@@ -49,7 +49,7 @@ document.addEventListener('DOMContentLoaded', async function() {
         }
     }
 
-    /* User Input */
+    /* User Input Area */
     function adjustHeight() {
         userInputTextArea.style.height = 'auto';
         const newHeight = Math.min(userInputTextArea.scrollHeight, 300);
@@ -61,7 +61,8 @@ document.addEventListener('DOMContentLoaded', async function() {
     window.addEventListener('resize', adjustHeight);
 
     // User Input Listeners
-    userInputSubmitButton.addEventListener('click', function(){
+    userInputSubmitButton.addEventListener('click', async function(){
+        await getRoomId();
         addUserMessage(userInputTextArea.value.trim());
         userInputTextArea.value = '';
     });
@@ -71,6 +72,24 @@ document.addEventListener('DOMContentLoaded', async function() {
             userInputSubmitButton.click();
         }
     });
+
+    async function getRoomId() {
+        const rsp = await fetch("http://127.0.0.1:80/chat/room_id", {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({room_name: document.querySelector(".room-link.active").textContent})
+        });
+
+        if (rsp.status == 200) {
+            const data = await rsp.json();
+            console.log("Room Data: ", data);
+//            await fetch("/get-room"{
+//                method: 'POST',
+//                headers: {'Content-Type': 'application/json'},
+//                body: JSON.stringify({room_name: data[""])
+//            });
+        }
+    }
 
 
     /* Chat Cards */
@@ -163,7 +182,6 @@ document.addEventListener('DOMContentLoaded', async function() {
         const button = e.target.closest('.room-link');
 
         if (button) {
-            console.log('button');
             const activeButtons = document.querySelectorAll('.room-link.active');
             if (activeButtons){
                 activeButtons.forEach(btn => btn.classList.remove('active'));
@@ -171,6 +189,5 @@ document.addEventListener('DOMContentLoaded', async function() {
         }
 
         button.classList.add('active')
-        console.log(button);
     });
 });

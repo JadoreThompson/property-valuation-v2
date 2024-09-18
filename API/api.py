@@ -260,9 +260,9 @@ async def create_room(room_request: CreateRoomRequest):
                     FROM users
                     WHERE email = %s;
                 """, (room_request.email, ))
-                admin_data = cur.fetchone()
+                admin_data = cur.fetchall()
                 room_request = room_request.dict()
-                room_request["admin_id"] = admin_data[0]
+                room_request["admin_id"] = admin_data[0][0]
 
                 if admin_data is None:
                     raise HTTPException(
@@ -271,21 +271,28 @@ async def create_room(room_request: CreateRoomRequest):
                     )
 
                 # Check current room limit
-                room_limit = max_rooms[admin_data[1]]
+                room_limit = max_rooms[admin_data[0][1]]
                 print(f"{room_request["email"]} limit is {room_limit}")
 
                 cur.execute("""\
                     SELECT COUNT(room_name) AS room_count, 
                        ARRAY_AGG(room_name) AS room_names
                     FROM rooms
-                    WHERE admin_id = 24; 
-                """)
-                room_data = cur.fetchone()
+                    WHERE admin_id = %s; 
+                """, (room_request["admin_id"], ))
+                room_data = cur.fetchall()
+                print("Room Data: ", room_data)
+                print(room_data[0][1])
                 if room_data:
-                    if room_data[0] == room_limit:
+                    if room_data[0][0] == room_limit:
                         raise HTTPException(
                             status_code=412,
                             detail="You've reached your limit"
+                        )
+                    if room_request["room_name"] in room_data[0][1]:
+                        raise HTTPException(
+                            status_code=405,
+                            detail="yo"
                         )
 
                 # Inserting into table

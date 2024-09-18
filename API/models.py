@@ -2,8 +2,7 @@ import re
 from enum import Enum
 
 # Pydantic and Fast API related
-from pydantic import BaseModel, Field, field_validator, ValidationError, model_validator, constr
-from typing import Optional, List, Any
+from pydantic import BaseModel, Field
 
 
 class PricingPlan(Enum):
@@ -12,6 +11,12 @@ class PricingPlan(Enum):
     ENTERPRISE = 'enterprise'
 
 
+class MessageType(Enum):
+    USER = 'user'
+    BOT = 'bot'
+
+
+"""Pydantic Models"""
 class HTTPResponse(BaseModel):
     status: int
 
@@ -58,6 +63,19 @@ class CheckoutForm(BaseModel):
 class CreateRoomRequest(BaseModel):
     email: str
     room_name: str = Field(max_length=20)
+
+
+class Message(BaseModel):
+    message: str
+    room_id: int
+
+
+class ChatMessage(Message):
+    type: MessageType
+
+
+class EditMessage(Message):
+    message_id: int
 
 
 if __name__ == "__main__":

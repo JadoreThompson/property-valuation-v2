@@ -27,28 +27,23 @@ document.addEventListener('DOMContentLoaded', function(){
     async function signUp(formData, formStatus, formObj) {
         if (formData) {
             try {
-                const rsp = await fetch("http://127.0.0.1:80/signup" ,{
+                const rsp = await fetch("http://127.0.0.1:80/auth/signup" ,{
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
                     body: JSON.stringify(formObj)
                 });
 
                 const data = await rsp.json()
+                console.log(data);
 
                 if (rsp.status == 200) {
-                    console.log("below");
-                    console.log({email: formObj["email"]});
                     const rsp2 = await fetch("/get-email", {
                         method: 'POST',
                         headers: {'Content-Type': 'application/json'},
-                        body: JSON.stringify({email: formObj["email"]})
+                        body: JSON.stringify({email: data["email"], user_id: data["user_id"]})
                     });
-
-                    const data2 = await rsp2.json();
-                    console.log(data2);
                     window.location.href = '/pricing';
                 } else {
-                    console.log(data.detail);
                     throw new Error(data.detail);
                 }
             } catch (e) {

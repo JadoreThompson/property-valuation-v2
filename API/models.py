@@ -80,6 +80,11 @@ class EditMessage(Message):
 
 class RoomRequest(BaseModel):
     room_name: str
+    admin_id: int
+
+
+class LoadChatRequest(BaseModel):
+    room_id: int
 
 
 if __name__ == "__main__":

@@ -18,9 +18,9 @@ views = Blueprint("views", __name__)
 def login_required(f):
     @wraps(f)
     def secure_endpoint(*args, **kwargs):
-        if "email" not in session:
+        if "email" not in session and "user_id" not in session:
             flash("You need to be logged in to access this page.")
-            return redirect(url_for('views.login'))  # Redirect to the login page
+            return redirect(url_for('views.login'))
         return f(*args, **kwargs)
     return secure_endpoint
 
@@ -46,6 +46,7 @@ def dashboard():
     """
     with get_db_conn() as conn:
         with conn.cursor() as cur:
+            '''Loading the rooms connected to acc'''
             cur.execute("SELECT id FROM users WHERE email = %s;", (session['email'], ))
             data = cur.fetchone()
             admin_id = data[0]
@@ -58,6 +59,7 @@ def dashboard():
                 all_rooms = None
             else:
                 all_rooms = [item[0] for item in data]
+
     return render_template(
         "dashboard.html", email=session["email"],
         all_rooms=all_rooms
@@ -106,9 +108,13 @@ def checkout():
 """API Endpoints"""
 @views.route('/get-email', methods=["POST"])
 def get_email():
-    body = request.get_json()
-    session["email"] = body["email"]
-    return jsonify({"email": body["email"]}), 200
+    try:
+        body = request.get_json()
+        for k, v in body.items():
+            session[k] = v
+        return jsonify({"status": 200, "detail": "success"}), 200
+    except Exception as e:
+        return jsonify({"status": 500, "detail": f"{type(e).__name__} - {str(e)}"}), 500
 
 
 @views.route('/get-plan', methods=["POST"])

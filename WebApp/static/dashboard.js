@@ -77,7 +77,10 @@ document.addEventListener('DOMContentLoaded', async function() {
         const rsp = await fetch("http://127.0.0.1:80/chat/room_id", {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({room_name: document.querySelector(".room-link.active").textContent})
+            body: JSON.stringify({
+                room_name: document.querySelector(".room-link.active").textContent,
+
+                })
         });
 
         if (rsp.status == 200) {
@@ -93,7 +96,7 @@ document.addEventListener('DOMContentLoaded', async function() {
 
 
     /* Chat Cards */
-    async function addUserMessage(question)  {
+    async function addUserMessage(question, get_response = true)  {
         const allMessageContainer = document.querySelector('.chat-messages');
         const newDiv = document.createElement('div');
         const editButton = document.createElement('button');
@@ -107,7 +110,9 @@ document.addEventListener('DOMContentLoaded', async function() {
         allMessageContainer.appendChild(newDiv);
         allMessageContainer.scrollTop = allMessageContainer.scrollHeight;
 
-        await getResponse(question);
+        if (get_response) {
+            await getResponse(question);
+        }
     }
 
     async function addBotMessage(response) {
@@ -178,7 +183,7 @@ document.addEventListener('DOMContentLoaded', async function() {
     });
 
     // Giving room link active status
-    allRoomsContainer.addEventListener('click', function(e){
+    allRoomsContainer.addEventListener('click', async function(e){
         const button = e.target.closest('.room-link');
 
         if (button) {
@@ -186,6 +191,30 @@ document.addEventListener('DOMContentLoaded', async function() {
             if (activeButtons){
                 activeButtons.forEach(btn => btn.classList.remove('active'));
             }
+
+            const allMessageContainer = document.querySelector('.chat-messages');
+            allMessageContainer.innerHTML = '';
+
+            const rsp = await fetch("http://127.0.0.1:80/chat/load-chats", {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({room_id: 7})
+            });
+            const data = await rsp.json()
+            let chats = data["chats"];
+            let allChats = [];
+
+//            chats.forEach(chat => console.log(chat));
+
+            chats.forEach(chat => {
+                let chatObj = {type: chat[0], message: chat[1]};
+                if (chatObj["type"] == "user_message") {
+                    addUserMessage(chatObj["message"], false);
+                }
+                if (chatObj["type"] == "bot_message") {
+                    addBotMessage(chatObj["message"]);
+                }
+            });
         }
 
         button.classList.add('active')

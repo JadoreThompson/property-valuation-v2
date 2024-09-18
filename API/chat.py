@@ -11,6 +11,7 @@ from API.models import (
     ChatMessage,
     EditMessage,
     MessageType,
+    LoadChatRequest,
     RoomRequest
 )
 from API.robot import get_insert_data
@@ -116,24 +117,17 @@ async def edit_chat(message: EditMessage):
                 print(f"Edit Chat: {type(e).__name__} - {str(e)}")
 
 
-@chat.post("/room_id")
-async def get_room_id(room_request: RoomRequest):
+@chat.post("/load-chats")
+async def load_chats(load_request: LoadChatRequest):
+    """
+    :param load_request:
+    :return:
+    """
     with get_db_conn() as conn:
         with conn.cursor() as cur:
-            try:
-                cur.execute("""\
-                    SELECT id
-                    FROM rooms
-                    WHERE room_name = %s;
-                """, (room_request.room_name, ))
-                room_id = cur.fetchone()
-                if room_id is None:
-                    return JSONResponse(
-                        status_code=404, content={"detail": "Room doesn't exist"}
-                    )
-                return JSONResponse(
-                    status_code=200, content={"detail": room_id[0]}
-                )
-            except psycopg2.Error as e:
-                conn.rollback()
-                print(f"Get Room ID: {type(e).__name__} - {str(e)}")
+            cur.execute("SELECT type, message FROM messages WHERE room_id = %s;", (load_request.room_id, ))
+            return_data = cur.fetchall()
+            return JSONResponse(
+                status_code=200, content={"chats": return_data}
+            )
+

@@ -21,6 +21,12 @@ from API.models import (
 from API.robot import get_existing_user, get_insert_data
 from db_connection import get_db_conn
 
+'''
+TODO: 
+    - Store only email and room name in session
+    - Ensure all queries can work with those pieces of data
+'''
+
 
 # Environment Variables
 origins = [

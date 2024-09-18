@@ -4,6 +4,7 @@ from argon2 import PasswordHasher
 
 # FastAPI Modules
 from fastapi import HTTPException, APIRouter
+from fastapi.responses import JSONResponse
 
 # Directory Modules
 from API.models import *
@@ -38,14 +39,19 @@ async def signup(user: SignUpUser):
                 cur.execute(f"""\
                     INSERT INTO users ({", ".join(cols)})\
                     VALUES ({placeholders})\
-                    RETURNING id;
+                    RETURNING id, email;
                 """, values)
-                user = cur.fetchone()
+                return_data = cur.fetchall()
                 conn.commit()
 
-                if user is None:
+                if return_data is None:
                     raise HTTPException(status_code=400, detail="Something went wrong")
-                return AuthResponse(status=200, detail="Successfully Signed Up")
+                return JSONResponse(
+                    status_code=200, content={
+                        "user_id": return_data[0][0],
+                        "email": return_data[0][1]
+                    }
+                )
 
             except psycopg2.Error as e:
                 conn.rollback()
@@ -68,15 +74,22 @@ async def login(user: User):
         with conn.cursor() as cur:
             try:
                 # Checking if someone already exists
-                existing_user = get_existing_user(cur=cur, email=user.email, field='password')
+                cur.execute("SELECT 1 FROM users WHERE email = %s;", (user.email, ))
+                existing_user = cur.fetchone()
                 if not existing_user:
                     raise HTTPException(status_code=409, detail="User doesn't exist")
 
                 # Passwords don't match
-                if not ph.verify(existing_user[0], user.password):
+                cur.execute("SELECT password FROM users WHERE email = %s;", (user.email,))
+                password = cur.fetchone()
+                if not ph.verify(password[0], user.password):
                     raise HTTPException(status_code=401, detail="Invalid credentials")
-                return AuthResponse(status=200, detail="Successfully logged in")
 
+                cur.execute("SELECT id, email FROM users WHERE email = %s;", (user.email, ))
+                return_data = cur.fetchall()
+                return JSONResponse(
+                    status_code=200, content={"user_id": return_data[0][0], "email": return_data[0][1]}
+                )
             except psycopg2.Error as e:
                 conn.rollback()
                 print("Login, Psycopg2 Error: ", str(e))

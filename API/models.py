@@ -34,10 +34,6 @@ class AuthResponse(HTTPResponse):
     detail: str
 
 
-class ChatRequest(BaseModel):
-    question: str
-
-
 class ChatResponse(HTTPResponse):
     response: str
 
@@ -70,7 +66,6 @@ class Message(BaseModel):
 
 
 class ChatMessage(Message):
-    # type: MessageType
     type: str
 
 
@@ -85,6 +80,12 @@ class RoomRequest(BaseModel):
 
 class LoadChatRequest(BaseModel):
     room_id: int
+
+
+class ChatRequest(BaseModel):
+    room_id: int
+    question: str
+    type: str
 
 
 if __name__ == "__main__":

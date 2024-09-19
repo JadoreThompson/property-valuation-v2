@@ -24,12 +24,15 @@ document.addEventListener('DOMContentLoaded', function(){
                 console.log(data);
                 if (rsp.status == 200) {
                     console.log('success');
-                    const rsp2 = await fetch("/get-email", {
+                    const rsp2 = await fetch("/save-session-object", {
                         method: 'POST',
                         headers: {'Content-Type': 'application/json'},
-                        body: JSON.stringify({email: data["email"], user_id: data["user_id"]})
+                        body: JSON.stringify({user_id: data["user_id"]})
                     })
-                    window.location.href = "/dashboard";
+                    if (rsp2.status == 200) {
+                        window.location.href = "/dashboard";
+                    }
+
                 } else {
                     console.log(data.detail);
                     throw new Error(data.detail);

@@ -22,33 +22,6 @@ document.addEventListener('DOMContentLoaded', async function() {
     });
 
 
-    /* API Requests */
-    async function getResponse(prompt) {
-        let message;
-        url = "http://127.0.0.1:80/get-response";
-
-        try {
-            const rsp = await fetch(url, {
-                method: 'POST',
-                headers: {"Content-Type": "application/json"},
-                body: JSON.stringify({question: prompt})
-            });
-
-            if (rsp.status != 200) {
-                throw new Error('Something went wrong');
-            }
-
-            const data = await rsp.json();
-            message = data.response;
-
-        } catch(e) {
-            console.log("Error: ", e);
-            message = e;
-        } finally {
-            await addBotMessage(message);
-        }
-    }
-
     /* User Input Area */
     function adjustHeight() {
         userInputTextArea.style.height = 'auto';
@@ -62,7 +35,6 @@ document.addEventListener('DOMContentLoaded', async function() {
 
     // User Input Listeners
     userInputSubmitButton.addEventListener('click', async function(){
-        await getRoomId();
         addUserMessage(userInputTextArea.value.trim());
         userInputTextArea.value = '';
     });
@@ -73,24 +45,31 @@ document.addEventListener('DOMContentLoaded', async function() {
         }
     });
 
-    async function getRoomId() {
-        const rsp = await fetch("http://127.0.0.1:80/chat/room_id", {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({
-                room_name: document.querySelector(".room-link.active").textContent,
 
-                })
-        });
+    /* API Requests */
+    async function getResponse(prompt) {
+        let message;
+        url = "http://127.0.0.1:80/chat/get-response";
 
-        if (rsp.status == 200) {
+        try {
+            const rsp = await fetch(url, {
+                method: 'POST',
+                headers: {"Content-Type": "application/json"},
+                body: JSON.stringify({question: prompt})
+            });
+
+            if (rsp.status != 200) {
+                throw new Error('Something went wrong');
+            }
+
             const data = await rsp.json();
-            console.log("Room Data: ", data);
-//            await fetch("/get-room"{
-//                method: 'POST',
-//                headers: {'Content-Type': 'application/json'},
-//                body: JSON.stringify({room_name: data[""])
-//            });
+            message = data["response"];
+
+        } catch(e) {
+            console.log("Error: ", e);
+            message = e;
+        } finally {
+            await addBotMessage(message);
         }
     }
 
@@ -101,7 +80,7 @@ document.addEventListener('DOMContentLoaded', async function() {
         const newDiv = document.createElement('div');
         const editButton = document.createElement('button');
 
-        newDiv.className = 'message user-message';
+        newDiv.className = 'message user_message';
         newDiv.textContent = question;
         editButton.className = 'action-button edit-button';
         editButton.textContent = 'Edit';
@@ -112,6 +91,7 @@ document.addEventListener('DOMContentLoaded', async function() {
 
         if (get_response) {
             await getResponse(question);
+            await saveChat();
         }
     }
 
@@ -185,6 +165,7 @@ document.addEventListener('DOMContentLoaded', async function() {
     // Giving room link active status
     allRoomsContainer.addEventListener('click', async function(e){
         const button = e.target.closest('.room-link');
+        console.log(button);
 
         if (button) {
             const activeButtons = document.querySelectorAll('.room-link.active');
@@ -195,28 +176,31 @@ document.addEventListener('DOMContentLoaded', async function() {
             const allMessageContainer = document.querySelector('.chat-messages');
             allMessageContainer.innerHTML = '';
 
-            const rsp = await fetch("http://127.0.0.1:80/chat/load-chats", {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({room_id: 7})
-            });
-            const data = await rsp.json()
-            let chats = data["chats"];
-            let allChats = [];
+            try {
+                const rsp = await fetch("http://127.0.0.1:80/chat/load-chats", {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({room_id: button.getAttribute('data-id')})
+                });
+                if (rsp.status == 200) {
+                    const data = await rsp.json()
+                    let chats = data["chats"];
+                    let allChats = [];
 
-//            chats.forEach(chat => console.log(chat));
-
-            chats.forEach(chat => {
-                let chatObj = {type: chat[0], message: chat[1]};
-                if (chatObj["type"] == "user_message") {
-                    addUserMessage(chatObj["message"], false);
+                    chats.forEach(chat => {
+                        let chatObj = {type: chat[0], message: chat[1]};
+                        if (chatObj["type"] == "user_message") {
+                            addUserMessage(chatObj["message"], false);
+                        }
+                        if (chatObj["type"] == "bot_message") {
+                            addBotMessage(chatObj["message"]);
+                        }
+                    });
                 }
-                if (chatObj["type"] == "bot_message") {
-                    addBotMessage(chatObj["message"]);
-                }
-            });
+            } catch (e) {
+                console.log('Error: ', e.message);
+            }
         }
-
         button.classList.add('active')
     });
 });

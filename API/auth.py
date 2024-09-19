@@ -39,19 +39,14 @@ async def signup(user: SignUpUser):
                 cur.execute(f"""\
                     INSERT INTO users ({", ".join(cols)})\
                     VALUES ({placeholders})\
-                    RETURNING id, email;
+                    RETURNING id;
                 """, values)
-                return_data = cur.fetchall()
+                return_data = cur.fetchone()
                 conn.commit()
 
                 if return_data is None:
                     raise HTTPException(status_code=400, detail="Something went wrong")
-                return JSONResponse(
-                    status_code=200, content={
-                        "user_id": return_data[0][0],
-                        "email": return_data[0][1]
-                    }
-                )
+                return JSONResponse(status_code=200, content={"user_id": return_data[0]})
 
             except psycopg2.Error as e:
                 conn.rollback()
@@ -74,7 +69,7 @@ async def login(user: User):
         with conn.cursor() as cur:
             try:
                 # Checking if someone already exists
-                cur.execute("SELECT 1 FROM users WHERE email = %s;", (user.email, ))
+                cur.execute("SELECT id FROM users WHERE email = %s;", (user.email, ))
                 existing_user = cur.fetchone()
                 if not existing_user:
                     raise HTTPException(status_code=409, detail="User doesn't exist")
@@ -85,11 +80,7 @@ async def login(user: User):
                 if not ph.verify(password[0], user.password):
                     raise HTTPException(status_code=401, detail="Invalid credentials")
 
-                cur.execute("SELECT id, email FROM users WHERE email = %s;", (user.email, ))
-                return_data = cur.fetchall()
-                return JSONResponse(
-                    status_code=200, content={"user_id": return_data[0][0], "email": return_data[0][1]}
-                )
+                return JSONResponse(status_code=200, content={"user_id": existing_user[0]})
             except psycopg2.Error as e:
                 conn.rollback()
                 print("Login, Psycopg2 Error: ", str(e))

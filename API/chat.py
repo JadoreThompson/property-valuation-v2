@@ -1,3 +1,5 @@
+import asyncio
+
 import psycopg2
 
 # FastAPI Modules
@@ -22,27 +24,25 @@ from db_connection import get_db_conn
 chat = APIRouter(prefix='/chat', tags=["chat"])
 
 
-@chat.post("/get-response", response_model=ChatResponse)
-async def get_response(chat_request: ChatRequest):
-    """
-    :param chat_request:
-    :return: ChatResponse(JSON):
-        - response: str
-    """
+@chat.post("/get-response")
+async def get_response(rsp_req: ChatMessage):
     try:
-        question = chat_request.question
+        question = rsp_req.message
+        task = asyncio.create_task(add_chat(rsp_req))
+
         rsp = await get_llm_response(question)
-        return ChatResponse(status=200, response=rsp)
+        rsp_model = ChatMessage(message=rsp, room_id=rsp_req.room_id, type=MessageType.BOT.value)
+        rsp_task = asyncio.create_task(add_chat())
+
+        await task, rsp_task
+
+        return JSONResponse(
+            status_code=200, content={"response": rsp}
+        )
+
     except Exception as e:
         print(f"Get Response: {str(e)}")
         raise HTTPException(status_code=500, detail="Something went wrong, please try again")
-
-
-@chat.post("/test-type")
-async def test(type: str):
-    if type in [item.value for item in MessageType]:
-        return True
-    return False
 
 
 @chat.post("/add-chat")
@@ -125,9 +125,22 @@ async def load_chats(load_request: LoadChatRequest):
     """
     with get_db_conn() as conn:
         with conn.cursor() as cur:
-            cur.execute("SELECT type, message FROM messages WHERE room_id = %s;", (load_request.room_id, ))
-            return_data = cur.fetchall()
-            return JSONResponse(
-                status_code=200, content={"chats": return_data}
-            )
-
+            try:
+                cur.execute("""\
+                    SELECT type, message
+                    FROM messages
+                    WHERE room_id = %s;
+                """, (load_request.room_id, ))
+                chats = cur.fetchall()
+                if chats is None:
+                    raise HTTPException(
+                        status_code=404, detail="No messages exist for room"
+                    )
+                return JSONResponse(
+                    status_code=200, content={"chats": chats}
+                )
+            except psycopg2.Error as e:
+                conn.rolback()
+                raise HTTPException(
+                    status_code=500, detail="Internal server error, please try again"
+                )

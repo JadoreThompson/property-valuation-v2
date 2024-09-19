@@ -194,7 +194,7 @@ body {
     border: 1px solid var(--primary-color);
     margin-bottom: 1rem;
 }
-.user-message {
+.user_message {
     background-color: white;
 }
 .bot-message{
@@ -292,7 +292,7 @@ body {
     opacity: 0;
     transition: opacity 0.3s ease;
 }
-.user-message:hover .action-button {
+.user_message:hover .action-button {
     opacity: 1;
 }
 .action-button:hover {

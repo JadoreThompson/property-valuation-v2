@@ -37,12 +37,18 @@ document.addEventListener('DOMContentLoaded', function(){
                 console.log(data);
 
                 if (rsp.status == 200) {
-                    const rsp2 = await fetch("/get-email", {
+                    const rsp2 = await fetch("/save-session-object", {
                         method: 'POST',
                         headers: {'Content-Type': 'application/json'},
-                        body: JSON.stringify({email: data["email"], user_id: data["user_id"]})
+                        body: JSON.stringify({user_id: data["user_id"]})
                     });
-                    window.location.href = '/pricing';
+                    if (rsp.status == 200) {
+                        window.location.href = '/pricing';
+                    } else {
+                        const data = await rsp2.json();
+                        throw new Error(data["message"]);
+                    }
+
                 } else {
                     throw new Error(data.detail);
                 }

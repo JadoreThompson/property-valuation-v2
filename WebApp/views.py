@@ -46,22 +46,25 @@ def dashboard():
     """
     with get_db_conn() as conn:
         with conn.cursor() as cur:
-            '''Loading the rooms connected to acc'''
-            cur.execute("SELECT id FROM users WHERE email = %s;", (session['email'], ))
-            data = cur.fetchone()
-            admin_id = data[0]
-
+            # Loading the rooms connected to acc
             cur.execute("""\
-                SELECT room_name FROM rooms WHERE admin_id = %s;
-            """, (admin_id, ))
+                SELECT room_name, id FROM rooms WHERE admin_id = %s;
+            """, (session["user_id"], ))
             data = cur.fetchall()
             if data is None:
                 all_rooms = None
             else:
-                all_rooms = [item[0] for item in data]
+                all_rooms = data
+
+            cur.execute("""\
+                SELECT email\
+                FROM users\
+                WHERE id = %s;
+            """, (session["user_id"], ))
+            email = cur.fetchone()[0]
 
     return render_template(
-        "dashboard.html", email=session["email"],
+        "dashboard.html", email=email,
         all_rooms=all_rooms
     )
 
@@ -71,11 +74,9 @@ def pricing():
     return render_template("pricing.html")
 
 
-
 @views.route('/signup')
 def signup():
     return render_template("signup.html")
-
 
 
 @views.route("/login")
@@ -106,30 +107,13 @@ def checkout():
 
 
 """API Endpoints"""
-@views.route('/get-email', methods=["POST"])
-def get_email():
+@views.route("/save-session-object", methods=["POST"])
+def save_session_object():
     try:
         body = request.get_json()
         for k, v in body.items():
             session[k] = v
-        return jsonify({"status": 200, "detail": "success"}), 200
+        return jsonify({"status": 200, "message": "Success"}), 200
     except Exception as e:
-        return jsonify({"status": 500, "detail": f"{type(e).__name__} - {str(e)}"}), 500
-
-
-@views.route('/get-plan', methods=["POST"])
-def get_pricing_plan():
-    body = request.get_json()
-    if session["plan"]:
-        session.pop("plan")
-    session["plan"] = body["plan"]
-    return jsonify({"plan": body["plan"]}), 200
-
-
-@views.route("/get-room", methods=["POST"])
-def get_room():
-    body = request.get_json()
-    if session["room_id"]:
-        session.pop("room_id")
-    session["room_id"] = body["room_id"]
-    return jsonify({"room_id": body["room_id"]}), 200
+        print(f"Save Session Object: {type(e).__name__} - {str(e)}")
+        return jsonify({"status": 500, "message": str(e)}), 500

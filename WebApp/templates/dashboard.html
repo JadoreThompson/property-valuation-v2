@@ -3,10 +3,11 @@
 {% block title %}Dashboard{% endblock %}
 
 {% block content %}
+<!--Sidebar-->
 <div class="dashboard-container">
     <nav class="sidebar">
         <div class="sidebar-header">
-            <h3>ChatBot</h3>
+            <h3>PropValAI</h3>
             <button class="mobile-toggle" id="sidebarToggle">
                 <i class="fas fa-bars"></i>
             </button>
@@ -32,6 +33,7 @@
         </ul>
     </nav>
 
+    <!--Header-->
     <main class="main-content">
         <nav class="top-navbar">
             <div class="container-fluid">
@@ -45,9 +47,21 @@
             </div>
         </nav>
 
+        <style>
+            .container {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                gap: 10px;
+            }
+        </style>
+        <!--Chat Container-->
         <div class="chat-container">
-            <div class="chat-messages"></div>
-            <div class="input-area">
+            <div class="chat-overlay">
+            </div>
+
+            <div class="chat-messages" style="display: none;"></div>
+            <div class="input-area" style="display: none;">
                 <div class="container-fluid">
                     <div class="row">
                         <div class="col-10">
@@ -62,7 +76,7 @@
         </div>
     </main>
 
-
+    <!--Create Room Card-->
     <div id="create-room-overlay" class="create-room-overlay">
         <div class="create-room-card">
             <h2>Create New Room</h2>

@@ -10,6 +10,7 @@ document.addEventListener('DOMContentLoaded', async function() {
     const roomLinks = document.querySelectorAll('.room-link');
     const allRoomsContainer = document.getElementById('room-list');
 
+
     // User Input Consts
     const userInputTextArea = document.getElementById('user-input-textarea');
     const userInputSubmitButton = document.getElementById('user-input-button');
@@ -50,10 +51,9 @@ document.addEventListener('DOMContentLoaded', async function() {
     /* API Requests */
     async function getResponse(prompt, type = 'user_message') {
         let message;
-        url = "http://127.0.0.1:8000/chat/get-response";
 
         try {
-            const rsp = await fetch(url, {
+            const rsp = await fetch("http://127.0.0.1:8000/chat/get-response", {
                 method: 'POST',
                 headers: {"Content-Type": "application/json"},
                 body: JSON.stringify({
@@ -79,13 +79,32 @@ document.addEventListener('DOMContentLoaded', async function() {
 
 
     /* Chat Cards */
+    function displayLoading(create = true) {
+        const allMessageContainer = document.querySelector('.chat-messages');
+        const loadingIcon = document.createElement('div');
+
+        if (create) {
+            loadingIcon.classList.add('loading-icon');
+            loadingIcon.textContent = 'Loading...';
+
+            allMessageContainer.appendChild(loadingIcon);
+            loadingIcon.style.display = 'flex';
+            allMessageContainer.scrollTop = allMessageContainer.scrollHeight;
+
+        } else {
+            allMessageContainer.removeChild(allMessageContainer.lastChild);
+        }
+    }
+
     async function addUserMessage(question, get_response = true)  {
         const allMessageContainer = document.querySelector('.chat-messages');
         const newDiv = document.createElement('div');
         const editButton = document.createElement('button');
 
+        // HTML/CSS assignment
         newDiv.className = 'message user_message';
         newDiv.textContent = question;
+
         editButton.className = 'action-button edit-button';
         editButton.textContent = 'Edit';
 
@@ -99,13 +118,17 @@ document.addEventListener('DOMContentLoaded', async function() {
     }
 
     async function addBotMessage(response) {
+        displayLoading(true);
         const allMessageContainer = document.querySelector('.chat-messages');
         const newDiv = document.createElement('div');
+
         newDiv.className = 'message bot-message';
         newDiv.textContent = response;
 
+        displayLoading(false);
         allMessageContainer.appendChild(newDiv);
         allMessageContainer.scrollTop = allMessageContainer.scrollHeight;
+
     }
 
 
@@ -132,15 +155,15 @@ document.addEventListener('DOMContentLoaded', async function() {
                     throw new Error('Fields Required');
                 }
             }
+
             formObj["admin_id"] = userEmailElement.dataset.custom;
+
             if (userEmail) {
                 const rsp = await fetch("http://127.0.0.1:8000/create-room", {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
                     body: JSON.stringify(formObj)
                 });
-                const data = await rsp.json();
-                console.log(data);
 
                 if (rsp.status == 401) {
                     window.location.href = '/pricing';
@@ -152,6 +175,8 @@ document.addEventListener('DOMContentLoaded', async function() {
                     window.alert(data.detail);
                     // Add this to the card
                 } else if (rsp.status == 200) {
+                    const data = await rsp.json();
+
                     roomStatus.style.display = 'none';
                     const roomList = document.getElementById('room-list');
                     const newRoom = document.createElement('li');
@@ -159,7 +184,6 @@ document.addEventListener('DOMContentLoaded', async function() {
                     newRoom.textContent = roomName;
                     newRoom.classList.add('room-link');
                     newRoom.setAttribute('data-id', data["room_id"]);
-                    console.log(newRoom);
                     roomList.appendChild(newRoom);
 
                     newRoom.addEventListener('click', function(){
@@ -172,11 +196,23 @@ document.addEventListener('DOMContentLoaded', async function() {
         } catch (e) { console.log('Error: ', e.message); }
     });
 
+    function showChat() {
+        const allMessageContainer = document.querySelector('.chat-messages');
+        const chatOverlay = document.querySelector('.chat-overlay');
+        const inputArea = document.querySelector('.input-area');
+
+        chatOverlay.style.display = 'none';
+        allMessageContainer.style.display = 'block';
+        inputArea.style.display ='block';
+    }
+
     // Sidebar
     async function loadChats(room) {
+        showChat();
+
         if (!room.classList.contains('active')) {
             const activeButtons = document.querySelectorAll('.room-link.active');
-            console.log(activeButtons);
+
             if (activeButtons){
                 activeButtons.forEach(btn => btn.classList.remove('active'));
             }

@@ -1,4 +1,5 @@
 document.addEventListener('DOMContentLoaded', async function() {
+    const userEmailElement = document.querySelector(".user-email");
     const userEmail = document.querySelector(".user-email").textContent;
 
     // Room Consts
@@ -47,7 +48,7 @@ document.addEventListener('DOMContentLoaded', async function() {
 
 
     /* API Requests */
-    async function getResponse(prompt) {
+    async function getResponse(prompt, type = 'user_message') {
         let message;
         url = "http://127.0.0.1:80/chat/get-response";
 
@@ -55,7 +56,11 @@ document.addEventListener('DOMContentLoaded', async function() {
             const rsp = await fetch(url, {
                 method: 'POST',
                 headers: {"Content-Type": "application/json"},
-                body: JSON.stringify({question: prompt})
+                body: JSON.stringify({
+                message: prompt,
+                room_id: document.querySelector('.room-link.active').getAttribute('data-id'),
+                type: type
+                })
             });
 
             if (rsp.status != 200) {
@@ -129,8 +134,8 @@ document.addEventListener('DOMContentLoaded', async function() {
                     throw new Error('Fields Required');
                 }
             }
-            formObj["email"] = userEmail;
-
+            formObj["user_id"] = userEmailElement.getAttribute('data-custom');
+            console.log(formObj);
             if (userEmail) {
                 const rsp = await fetch("http://127.0.0.1:80/create-room", {
                     method: 'POST',
@@ -180,7 +185,7 @@ document.addEventListener('DOMContentLoaded', async function() {
                 const rsp = await fetch("http://127.0.0.1:80/chat/load-chats", {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({room_id: button.getAttribute('data-id')})
+                    body: JSON.stringify({room_id: Number(button.getAttribute('data-id'))})
                 });
                 if (rsp.status == 200) {
                     const data = await rsp.json()
@@ -201,6 +206,6 @@ document.addEventListener('DOMContentLoaded', async function() {
                 console.log('Error: ', e.message);
             }
         }
-        button.classList.add('active')
+        button.classList.add('active');
     });
 });

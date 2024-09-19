@@ -8,7 +8,7 @@ from fastapi.responses import JSONResponse
 
 # Directory Modules
 from API.models import (
-    ChatResponse,
+    #'ChatResponse,
     ChatRequest,
     ChatMessage,
     EditMessage,
@@ -32,7 +32,7 @@ async def get_response(rsp_req: ChatMessage):
 
         rsp = await get_llm_response(question)
         rsp_model = ChatMessage(message=rsp, room_id=rsp_req.room_id, type=MessageType.BOT.value)
-        rsp_task = asyncio.create_task(add_chat())
+        rsp_task = asyncio.create_task(add_chat(rsp_model))
 
         await task, rsp_task
 

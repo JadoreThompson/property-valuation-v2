@@ -65,7 +65,7 @@ def dashboard():
 
     return render_template(
         "dashboard.html", email=email,
-        all_rooms=all_rooms
+        all_rooms=all_rooms, user_id=session["user_id"]
     )
 
 

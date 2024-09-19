@@ -156,13 +156,12 @@ async def create_room(room_request: CreateRoomRequest):
         with conn.cursor() as cur:
             try:
                 cur.execute("""\
-                    SELECT id, pricing_plan
+                    SELECT pricing_plan
                     FROM users
                     WHERE email = %s;
-                """, (room_request.email, ))
+                """, (room_request.admin_id, ))
                 admin_data = cur.fetchall()
                 room_request = room_request.dict()
-                room_request["admin_id"] = admin_data[0][0]
 
                 if admin_data is None:
                     raise HTTPException(
@@ -171,7 +170,7 @@ async def create_room(room_request: CreateRoomRequest):
                     )
 
                 # Check current room limit
-                room_limit = max_rooms[admin_data[0][1]]
+                room_limit = max_rooms[admin_data[0]]
 
                 cur.execute("""\
                     SELECT COUNT(room_name) AS room_count, 

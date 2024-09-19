@@ -30,25 +30,18 @@ class SignUpUser(User):
     sname: str
 
 
-class AuthResponse(HTTPResponse):
-    detail: str
-
-
-class ChatResponse(HTTPResponse):
-    response: str
-
-
-class ContactSalesForm(BaseModel):
+class Form(BaseModel):
     name: str
     email: str
+
+
+class ContactSalesForm(Form):
     phone: str
     employees: int = Field(ge=1)
     message: str
 
 
-class CheckoutForm(BaseModel):
-    name: str
-    email: str
+class CheckoutForm(Form):
     card_number: str = Field(min_length=16, max_length=16)
     expiry: str
     cvv: str = Field(min_length=3, max_length=3)
@@ -56,7 +49,7 @@ class CheckoutForm(BaseModel):
 
 
 class CreateRoomRequest(BaseModel):
-    email: str
+    admin_id: int
     room_name: str = Field(max_length=20)
 
 
@@ -86,13 +79,3 @@ class ChatRequest(BaseModel):
     room_id: int
     question: str
     type: str
-
-
-if __name__ == "__main__":
-    user = ContactSalesForm(
-        name="ja",
-        email="email",
-        phone="phone",
-        employees=0,
-        message="hi"
-    )

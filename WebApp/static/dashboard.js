@@ -71,7 +71,6 @@ document.addEventListener('DOMContentLoaded', async function() {
             message = data["response"];
 
         } catch(e) {
-            console.log("Error: ", e);
             message = e;
         } finally {
             await addBotMessage(message);
@@ -134,8 +133,7 @@ document.addEventListener('DOMContentLoaded', async function() {
                     throw new Error('Fields Required');
                 }
             }
-            formObj["user_id"] = userEmailElement.getAttribute('data-custom');
-            console.log(formObj);
+            formObj["admin_id"] = userEmailElement.getAttribute('data-custom');
             if (userEmail) {
                 const rsp = await fetch("http://127.0.0.1:80/create-room", {
                     method: 'POST',
@@ -158,6 +156,7 @@ document.addEventListener('DOMContentLoaded', async function() {
                     const roomList = document.getElementById('room-list');
                     const newRoom = document.createElement('li');
                     newRoom.textContent = roomName;
+                    newRoom.classList.add('room-link');
                     roomList.appendChild(newRoom);
 
                     createRoomOverlay.style.display = 'none';
@@ -167,45 +166,46 @@ document.addEventListener('DOMContentLoaded', async function() {
         } catch (e) {}
     });
 
-    // Giving room link active status
-    allRoomsContainer.addEventListener('click', async function(e){
-        const button = e.target.closest('.room-link');
-        console.log(button);
+    // Sidebar
+    roomLinks.forEach(room => {
+        room.addEventListener('click', async function loadChats(){
+            if (!room.classList.contains('active')) {
+                if (room) {
+                    const activeButtons = document.querySelectorAll('.room-link.active');
+                    if (activeButtons){
+                        activeButtons.forEach(btn => btn.classList.remove('active'));
+                    }
 
-        if (button) {
-            const activeButtons = document.querySelectorAll('.room-link.active');
-            if (activeButtons){
-                activeButtons.forEach(btn => btn.classList.remove('active'));
-            }
+                    room.classList.add('active');
+                    const allMessageContainer = document.querySelector('.chat-messages');
+                    allMessageContainer.innerHTML = '';
 
-            const allMessageContainer = document.querySelector('.chat-messages');
-            allMessageContainer.innerHTML = '';
+                    try {
+                        const rsp = await fetch("http://127.0.0.1:80/chat/load-chats", {
+                            method: 'POST',
+                            headers: {'Content-Type': 'application/json'},
+                            body: JSON.stringify({room_id: Number(room.getAttribute('data-id'))})
+                        });
+                        if (rsp.status == 200) {
+                            const data = await rsp.json()
+                            let chats = data["chats"];
+                            let allChats = [];
 
-            try {
-                const rsp = await fetch("http://127.0.0.1:80/chat/load-chats", {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({room_id: Number(button.getAttribute('data-id'))})
-                });
-                if (rsp.status == 200) {
-                    const data = await rsp.json()
-                    let chats = data["chats"];
-                    let allChats = [];
-
-                    chats.forEach(chat => {
-                        let chatObj = {type: chat[0], message: chat[1]};
-                        if (chatObj["type"] == "user_message") {
-                            addUserMessage(chatObj["message"], false);
+                            chats.forEach(chat => {
+                                let chatObj = {type: chat[0], message: chat[1]};
+                                if (chatObj["type"] == "user_message") {
+                                    addUserMessage(chatObj["message"], false);
+                                }
+                                if (chatObj["type"] == "bot_message") {
+                                    addBotMessage(chatObj["message"]);
+                                }
+                            });
                         }
-                        if (chatObj["type"] == "bot_message") {
-                            addBotMessage(chatObj["message"]);
-                        }
-                    });
+                    } catch (e) {
+                        window.alert(e.message);
+                    }
                 }
-            } catch (e) {
-                console.log('Error: ', e.message);
             }
-        }
-        button.classList.add('active');
+        });
     });
 });

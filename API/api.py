@@ -158,9 +158,9 @@ async def create_room(room_request: CreateRoomRequest):
                 cur.execute("""\
                     SELECT pricing_plan
                     FROM users
-                    WHERE email = %s;
+                    WHERE id = %s;
                 """, (room_request.admin_id, ))
-                admin_data = cur.fetchall()
+                admin_data = cur.fetchone()
                 room_request = room_request.dict()
 
                 if admin_data is None:
@@ -192,7 +192,6 @@ async def create_room(room_request: CreateRoomRequest):
                         )
 
                 # Inserting into table
-                del room_request["email"]
                 cols, placeholders, vals = get_insert_data(room_request)
 
                 cur.execute(f"""\

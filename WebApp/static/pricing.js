@@ -4,7 +4,7 @@ document.addEventListener('DOMContentLoaded', function(){
         button.addEventListener('click', async function(e){
             e.preventDefault();
             try {
-                const rsp = await fetch("/get-plan", {
+                const rsp = await fetch("/save-session-object", {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
                     body: JSON.stringify({"plan": button.getAttribute('data-custom')})

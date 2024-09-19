@@ -14,6 +14,16 @@ from db_connection import get_db_conn
 views = Blueprint("views", __name__)
 
 
+def get_user_email(cur):
+    cur.execute("""\
+        SELECT email\
+        FROM users\
+        WHERE id = %s;
+    """, (session["user_id"],))
+    email = cur.fetchone()[0]
+    return email
+
+
 # Login Wrapper
 def login_required(f):
     @wraps(f)
@@ -56,12 +66,7 @@ def dashboard():
             else:
                 all_rooms = data
 
-            cur.execute("""\
-                SELECT email\
-                FROM users\
-                WHERE id = %s;
-            """, (session["user_id"], ))
-            email = cur.fetchone()[0]
+            email = get_user_email(cur=cur)
 
     return render_template(
         "dashboard.html", email=email,
@@ -88,20 +93,22 @@ def login():
 @login_required
 def logout():
     try:
-        session.pop("email")
-        flash("Successfully Logged Out")
+        session.clear()
         return redirect(url_for('views.login'))
     except Exception as e:
-        print(f"Logout: {type(e).__name__} - {str(e)}")
-        return jsonify({"status": 500, "detail": "Something went wrong"}), 500
+        print(f"Save Session Object: {type(e).__name__} - {str(e)}")
+        return jsonify({"status": 200, "message": str(e)})
 
 
 @views.route("/checkout")
 @login_required
 def checkout():
+    with get_db_conn() as conn:
+        with conn.cursor() as cur:
+            email = get_user_email(cur=cur)
     return render_template(
         'checkout.html',
-        email=session["email"],
+        email=email,
         plan=session["plan"]
     )
 

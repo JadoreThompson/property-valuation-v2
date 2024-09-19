@@ -50,7 +50,7 @@ document.addEventListener('DOMContentLoaded', async function() {
     /* API Requests */
     async function getResponse(prompt, type = 'user_message') {
         let message;
-        url = "http://127.0.0.1:80/chat/get-response";
+        url = "http://127.0.0.1:8000/chat/get-response";
 
         try {
             const rsp = await fetch(url, {
@@ -95,7 +95,6 @@ document.addEventListener('DOMContentLoaded', async function() {
 
         if (get_response) {
             await getResponse(question);
-            await saveChat();
         }
     }
 
@@ -133,17 +132,18 @@ document.addEventListener('DOMContentLoaded', async function() {
                     throw new Error('Fields Required');
                 }
             }
-            formObj["admin_id"] = userEmailElement.getAttribute('data-custom');
+            formObj["admin_id"] = userEmailElement.dataset.custom;
             if (userEmail) {
-                const rsp = await fetch("http://127.0.0.1:80/create-room", {
+                const rsp = await fetch("http://127.0.0.1:8000/create-room", {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
                     body: JSON.stringify(formObj)
                 });
                 const data = await rsp.json();
+                console.log(data);
 
                 if (rsp.status == 401) {
-                    window.location.href = '/login';
+                    window.location.href = '/pricing';
                 } else if (rsp.status == 405) {
                     const roomStatus = document.querySelector('.roomStatus');
                     roomStatus.textContent = 'Room already exists';
@@ -155,57 +155,66 @@ document.addEventListener('DOMContentLoaded', async function() {
                     roomStatus.style.display = 'none';
                     const roomList = document.getElementById('room-list');
                     const newRoom = document.createElement('li');
+
                     newRoom.textContent = roomName;
                     newRoom.classList.add('room-link');
+                    newRoom.setAttribute('data-id', data["room_id"]);
+                    console.log(newRoom);
                     roomList.appendChild(newRoom);
 
+                    newRoom.addEventListener('click', function(){
+                        loadChats(newRoom);
+                    });
                     createRoomOverlay.style.display = 'none';
                     createRoomForm.reset();
                 }
             }
-        } catch (e) {}
+        } catch (e) { console.log('Error: ', e.message); }
     });
 
     // Sidebar
-    roomLinks.forEach(room => {
-        room.addEventListener('click', async function loadChats(){
-            if (!room.classList.contains('active')) {
-                if (room) {
-                    const activeButtons = document.querySelectorAll('.room-link.active');
-                    if (activeButtons){
-                        activeButtons.forEach(btn => btn.classList.remove('active'));
-                    }
-
-                    room.classList.add('active');
-                    const allMessageContainer = document.querySelector('.chat-messages');
-                    allMessageContainer.innerHTML = '';
-
-                    try {
-                        const rsp = await fetch("http://127.0.0.1:80/chat/load-chats", {
-                            method: 'POST',
-                            headers: {'Content-Type': 'application/json'},
-                            body: JSON.stringify({room_id: Number(room.getAttribute('data-id'))})
-                        });
-                        if (rsp.status == 200) {
-                            const data = await rsp.json()
-                            let chats = data["chats"];
-                            let allChats = [];
-
-                            chats.forEach(chat => {
-                                let chatObj = {type: chat[0], message: chat[1]};
-                                if (chatObj["type"] == "user_message") {
-                                    addUserMessage(chatObj["message"], false);
-                                }
-                                if (chatObj["type"] == "bot_message") {
-                                    addBotMessage(chatObj["message"]);
-                                }
-                            });
-                        }
-                    } catch (e) {
-                        window.alert(e.message);
-                    }
-                }
+    async function loadChats(room) {
+        if (!room.classList.contains('active')) {
+            const activeButtons = document.querySelectorAll('.room-link.active');
+            console.log(activeButtons);
+            if (activeButtons){
+                activeButtons.forEach(btn => btn.classList.remove('active'));
             }
+
+            room.classList.add('active');
+            const allMessageContainer = document.querySelector('.chat-messages');
+            allMessageContainer.innerHTML = '';
+
+            try {
+                const rsp = await fetch("http://127.0.0.1:8000/chat/load-chats", {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({room_id: Number(room.getAttribute('data-id'))})
+                });
+                if (rsp.status == 200) {
+                    const data = await rsp.json()
+                    let chats = data["chats"];
+                    let allChats = [];
+
+                    chats.forEach(chat => {
+                        let chatObj = {type: chat[0], message: chat[1]};
+                        if (chatObj["type"] == "user_message") {
+                            addUserMessage(chatObj["message"], false);
+                        }
+                        if (chatObj["type"] == "bot_message") {
+                            addBotMessage(chatObj["message"]);
+                        }
+                    });
+                }
+            } catch (e) {
+                window.alert(e.message);
+            }
+        }
+    }
+
+    roomLinks.forEach(room => {
+        room.addEventListener('click', function(){
+            loadChats(room);
         });
     });
 });

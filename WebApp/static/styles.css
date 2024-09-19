@@ -181,6 +181,8 @@ footer a:hover {
     display: flex;
     flex-direction: column;
     background-color: var(--background-color);
+    width: 100%;
+    right: 0;
 }
 .top-navbar {
     background-color: white;

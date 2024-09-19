@@ -30,10 +30,11 @@ TODO:
 
 # Environment Variables
 origins = [
-    "http://127.0.0.1:5000",
+    "http://127.0.0.1:5000/",
     "http://127.0.0.1:5000/dashboard",
-    "https://localhost:5000",
+    "https://localhost:5000/",
     "https://localhost:5000/dashboard",
+    "http://127.0.0.1:5000/",
     "http://127.0.0.1:5000"
 ]
 
@@ -163,14 +164,13 @@ async def create_room(room_request: CreateRoomRequest):
                 admin_data = cur.fetchone()
                 room_request = room_request.dict()
 
-                if admin_data is None:
-                    raise HTTPException(
-                        status_code=401,
-                        detail="Must be logged in"
-                    )
-
                 # Check current room limit
-                room_limit = max_rooms[admin_data[0]]
+                try:
+                    room_limit = max_rooms[admin_data[0]]
+                except KeyError:
+                    return JSONResponse(
+                        status_code=401, content={"detail": "Must have a billing account"}
+                    )
 
                 cur.execute("""\
                     SELECT COUNT(room_name) AS room_count, 
@@ -185,11 +185,14 @@ async def create_room(room_request: CreateRoomRequest):
                             status_code=412,
                             detail="You've reached your limit"
                         )
-                    if room_request["room_name"] in room_data[0][1]:
-                        raise HTTPException(
-                            status_code=405,
-                            detail="Room already exists"
-                        )
+                    try:
+                        if room_request["room_name"] in room_data[0][1]:
+                            raise HTTPException(
+                                status_code=405,
+                                detail="Room already exists"
+                           )
+                    except TypeError:
+                        pass
 
                 # Inserting into table
                 cols, placeholders, vals = get_insert_data(room_request)
@@ -204,8 +207,8 @@ async def create_room(room_request: CreateRoomRequest):
                 room_id = cur.fetchone()
                 if room_id is None:
                     raise psycopg2.Error
-                raise HTTPException(
-                    status_code=200, detail="Successfully created room"
+                return JSONResponse(
+                    status_code=200, content={"room_id": room_id[0]}
                 )
             except psycopg2.Error as e:
                 conn.rollback()
@@ -216,4 +219,4 @@ async def create_room(room_request: CreateRoomRequest):
 
 
 if __name__ == "__main__":
-    uvicorn.run("api:app", port=80, reload=True)
+    uvicorn.run("api:app", port=8000, reload=True)

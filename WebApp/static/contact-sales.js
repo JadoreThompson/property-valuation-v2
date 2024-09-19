@@ -19,7 +19,7 @@ document.addEventListener('DOMContentLoaded', function(){
                 throw new Error("Employees must be greater than 0")
             }
 
-            const rsp = await fetch("http://127.0.0.1:80/contact-sales", {
+            const rsp = await fetch("http://127.0.0.1:8000/contact-sales", {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify(formObj)

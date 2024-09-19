@@ -6,7 +6,7 @@ document.addEventListener('DOMContentLoaded', async function(){
 
     async function checkout(formObj) {
         try {
-            const rsp = await fetch("http://127.0.0.1:80/checkout", {
+            const rsp = await fetch("http://127.0.0.1:8000/checkout", {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify(formObj)

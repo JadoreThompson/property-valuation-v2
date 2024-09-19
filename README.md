@@ -24,11 +24,6 @@ This documentation covers the following Pydantic models used in the API:
 - **LoadChatRequest**: Request to load chat history.
 - **ChatRequest**: Request to ask a question in a chat room.
 
-### **API Endpoints**
-
-- **Auth - prefix /auth**
-    - `login`: Endpoint for user authentication.
-
 ## **Prerequisites**
 
 - Python 3.1

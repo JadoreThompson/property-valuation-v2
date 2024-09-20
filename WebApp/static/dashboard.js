@@ -50,6 +50,7 @@ document.addEventListener('DOMContentLoaded', async function() {
 
     /* API Requests */
     async function getResponse(prompt, type = 'user_message') {
+        displayLoading(true);
         let message;
 
         try {
@@ -81,11 +82,14 @@ document.addEventListener('DOMContentLoaded', async function() {
     /* Chat Cards */
     function displayLoading(create = true) {
         const allMessageContainer = document.querySelector('.chat-messages');
+        const loadingIconPath = document.getElementById('loadingIconPath').dataset.path;
         const loadingIcon = document.createElement('div');
+        const loadingImage = document.createElement('img');
+
 
         if (create) {
             loadingIcon.classList.add('loading-icon');
-            loadingIcon.textContent = 'Loading...';
+            loadingIcon.innerHTML = `<img src="${loadingIconPath}" alt="Loading...">`;
 
             allMessageContainer.appendChild(loadingIcon);
             loadingIcon.style.display = 'flex';
@@ -118,7 +122,6 @@ document.addEventListener('DOMContentLoaded', async function() {
     }
 
     async function addBotMessage(response) {
-        displayLoading(true);
         const allMessageContainer = document.querySelector('.chat-messages');
         const newDiv = document.createElement('div');
 

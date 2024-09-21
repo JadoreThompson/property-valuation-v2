@@ -1,4 +1,5 @@
 document.addEventListener('DOMContentLoaded', async function() {
+    const allMessageContainer = document.querySelector('.chat-messages');
     const userEmailElement = document.querySelector(".user-email");
     const userEmail = document.querySelector(".user-email").textContent;
 
@@ -81,7 +82,6 @@ document.addEventListener('DOMContentLoaded', async function() {
 
     /* Chat Cards */
     function displayLoading(create = true) {
-        const allMessageContainer = document.querySelector('.chat-messages');
         const loadingIconPath = document.getElementById('loadingIconPath').dataset.path;
         const loadingIcon = document.createElement('div');
         const loadingImage = document.createElement('img');
@@ -96,23 +96,24 @@ document.addEventListener('DOMContentLoaded', async function() {
             allMessageContainer.scrollTop = allMessageContainer.scrollHeight;
 
         } else {
-            allMessageContainer.removeChild(allMessageContainer.lastChild);
+            if (!allMessageContainer.lastChild.classList.contains('user-message')) {
+                allMessageContainer.removeChild(allMessageContainer.lastChild);
+            }
         }
     }
 
     async function addUserMessage(question, get_response = true)  {
-        const allMessageContainer = document.querySelector('.chat-messages');
         const newDiv = document.createElement('div');
-        const editButton = document.createElement('button');
+//        const editButton = document.createElement('button');
 
         // HTML/CSS assignment
-        newDiv.className = 'message user_message';
+        newDiv.className = 'message user-message';
         newDiv.textContent = question;
 
-        editButton.className = 'action-button edit-button';
-        editButton.textContent = 'Edit';
+//        editButton.className = 'action-button edit-button';
+//        editButton.textContent = 'Edit';
 
-        newDiv.appendChild(editButton);
+//        newDiv.appendChild(editButton);
         allMessageContainer.appendChild(newDiv);
         allMessageContainer.scrollTop = allMessageContainer.scrollHeight;
 
@@ -122,7 +123,6 @@ document.addEventListener('DOMContentLoaded', async function() {
     }
 
     async function addBotMessage(response) {
-        const allMessageContainer = document.querySelector('.chat-messages');
         const newDiv = document.createElement('div');
 
         newDiv.className = 'message bot-message';
@@ -200,7 +200,6 @@ document.addEventListener('DOMContentLoaded', async function() {
     });
 
     function showChat() {
-        const allMessageContainer = document.querySelector('.chat-messages');
         const chatOverlay = document.querySelector('.chat-overlay');
         const inputArea = document.querySelector('.input-area');
 
@@ -221,7 +220,6 @@ document.addEventListener('DOMContentLoaded', async function() {
             }
 
             room.classList.add('active');
-            const allMessageContainer = document.querySelector('.chat-messages');
             allMessageContainer.innerHTML = '';
 
             try {
@@ -235,15 +233,15 @@ document.addEventListener('DOMContentLoaded', async function() {
                     let chats = data["chats"];
                     let allChats = [];
 
-                    chats.forEach(chat => {
+                    for (let chat of chats) {
                         let chatObj = {type: chat[0], message: chat[1]};
                         if (chatObj["type"] == "user_message") {
-                            addUserMessage(chatObj["message"], false);
+                            await addUserMessage(chatObj["message"], false);
                         }
                         if (chatObj["type"] == "bot_message") {
-                            addBotMessage(chatObj["message"]);
+                            await addBotMessage(chatObj["message"]);
                         }
-                    });
+                    }
                 }
             } catch (e) {
                 window.alert(e.message);

@@ -229,7 +229,7 @@ footer a:hover {
     border: 1px solid var(--primary-color);
     margin-bottom: 1rem;
 }
-.user_message {
+.user-message {
     background-color: white;
 }
 .bot-message{
@@ -327,7 +327,7 @@ footer a:hover {
     opacity: 0;
     transition: opacity 0.3s ease;
 }
-.user_message:hover .action-button {
+.usermessage:hover .action-button {
     opacity: 1;
 }
 .action-button:hover {
